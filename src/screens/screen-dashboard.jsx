@@ -1,6 +1,16 @@
 // Today / Dashboard — premium edition: editorial layout, depth, refinement
 
 function DashboardScreen({ onNavigate }) {
+  const useStore = window.useUserStore;
+  const displayName = (useStore && useStore((s) => s.displayName)) || null;
+  const assessmentComplete = (useStore && useStore((s) => s.assessmentComplete)) || false;
+  const last7DaysMoods = (useStore && useStore((s) => s.last7DaysMoods)) || [];
+  const hasInsights = (useStore && useStore((s) => s.hasInsights)) || false;
+
+  const now = new Date();
+  const stamp = formatGreetingStamp(now);
+  const greeting = `Good evening${displayName ? ", " + displayName : ""}.`;
+
   return (
     <div className="scrollbar-hide" style={{ height: "100%", overflow: "auto", padding: "32px 44px 120px" }}>
       {/* Greeting */}
@@ -8,7 +18,7 @@ function DashboardScreen({ onNavigate }) {
         <div>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)" }} className="pulse-soft" />
-            <span className="label">Thursday · April 30 · 7:14 pm</span>
+            <span className="label">{stamp}</span>
           </div>
           <h1 className="display" style={{
             fontSize: 44, fontWeight: 400,
@@ -16,7 +26,7 @@ function DashboardScreen({ onNavigate }) {
             margin: 0, lineHeight: 1.05,
             maxWidth: 720,
           }}>
-            Good evening, Mara.
+            {greeting}
           </h1>
           <p className="display-italic" style={{ fontSize: 22, color: "var(--ink-3)", margin: "10px 0 0", letterSpacing: "-0.005em" }}>
             How are you arriving?
@@ -28,7 +38,10 @@ function DashboardScreen({ onNavigate }) {
       </div>
 
       {/* Hero player card */}
-      <PlayerCardHero onClick={() => onNavigate("playercard")} />
+      <PlayerCardHero
+        onClick={() => onNavigate(assessmentComplete ? "playercard" : "checkin")}
+        assessmentComplete={assessmentComplete}
+      />
 
       {/* Today path */}
       <div style={{ marginTop: 40 }}>
@@ -47,7 +60,7 @@ function DashboardScreen({ onNavigate }) {
             n="02"
             icon={<IconMoon size={20} />}
             title="Evening unwinding"
-            sub="A guided practice with Maren. Gentle, body-led, eight minutes."
+            sub="A guided practice. Gentle, body-led, eight minutes."
             time="8 min · audio"
             tint="color-mix(in oklab, var(--plum) 18%, var(--bg-card))"
             onClick={() => onNavigate("meditation")}
@@ -66,8 +79,8 @@ function DashboardScreen({ onNavigate }) {
 
       {/* Two-up: Mood trend + IRIS observation */}
       <div style={{ marginTop: 40, display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16 }}>
-        <MoodTrendCard onClick={() => onNavigate("insights")} />
-        <IRISObservationCard onClick={() => onNavigate("chat")} />
+        <MoodTrendCard onClick={() => onNavigate("insights")} points={last7DaysMoods} />
+        <IRISObservationCard onClick={() => onNavigate("chat")} hasInsights={hasInsights} />
       </div>
 
       {/* Three-up: Continuity, Recent journal, Practice library */}
@@ -81,17 +94,24 @@ function DashboardScreen({ onNavigate }) {
       <div style={{ marginTop: 40 }}>
         <SectionHeader title="This week, by the numbers" eyebrow="Last 7 days" action={<Pill onClick={() => onNavigate("insights")}>Full insights →</Pill>} />
         <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-          <StatCard label="Check-ins" value="5" delta="+2 vs last week" up />
-          <StatCard label="Journal words" value="2,148" delta="+38%" up />
-          <StatCard label="Minutes practiced" value="47" delta="−6 min" />
-          <StatCard label="Average mood" value="0.62" delta="rising" up suffix="/1.0" />
+          <StatCard label="Check-ins" value={hasInsights ? "—" : "—"} delta="" />
+          <StatCard label="Journal words" value="—" delta="" />
+          <StatCard label="Minutes practiced" value="—" delta="" />
+          <StatCard label="Average mood" value="—" delta="" suffix="" />
         </div>
       </div>
     </div>
   );
 }
 
-function PlayerCardHero({ onClick }) {
+function formatGreetingStamp(date) {
+  const weekday = date.toLocaleDateString(undefined, { weekday: "long" });
+  const monthDay = date.toLocaleDateString(undefined, { month: "long", day: "numeric" });
+  const time = date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }).toLowerCase();
+  return `${weekday} · ${monthDay} · ${time}`;
+}
+
+function PlayerCardHero({ onClick, assessmentComplete }) {
   return (
     <div onClick={onClick} className="scale-in" style={{
       position: "relative",
@@ -129,43 +149,55 @@ function PlayerCardHero({ onClick }) {
         <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 16 }}>
           <span className="label" style={{ color: "rgba(234,241,236,0.6)" }}>Your Engram</span>
           <span style={{ width: 4, height: 4, borderRadius: "50%", background: "rgba(234,241,236,0.3)" }} />
-          <span className="mono" style={{ fontSize: 11, color: "rgba(234,241,236,0.55)", letterSpacing: "0.05em" }}>4w5 · v0.847 · LK</span>
+          <span className="mono" style={{ fontSize: 11, color: "rgba(234,241,236,0.55)", letterSpacing: "0.05em" }}>
+            {assessmentComplete ? "v0 · pending" : "unread"}
+          </span>
         </div>
-        <h2 className="display" style={{
-          fontSize: 52, fontWeight: 400, margin: 0,
-          letterSpacing: "-0.035em", lineHeight: 1, maxWidth: 520,
-        }}>
-          The Lighthouse Keeper
-        </h2>
-        <p className="display-italic" style={{
-          margin: "16px 0 28px", fontSize: 18,
-          color: "rgba(234,241,236,0.7)", maxWidth: 480, lineHeight: 1.45,
-        }}>
-          You hold steady so others can find their way.
-        </p>
-
-        <div style={{ display: "flex", gap: 28, alignItems: "flex-end" }}>
-          {[
-            { label: "Cognitive", v: 0.78 },
-            { label: "Emotional", v: 0.62 },
-            { label: "Volitional", v: 0.71 },
-            { label: "Relational", v: 0.55 },
-            { label: "Existential", v: 0.84 },
-          ].map((d) => (
-            <div key={d.label}>
-              <div style={{ fontSize: 10, letterSpacing: "0.08em", color: "rgba(234,241,236,0.5)", textTransform: "uppercase", marginBottom: 8 }}>{d.label}</div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                <span className="mono" style={{ fontSize: 18, fontWeight: 500 }}>{d.v.toFixed(2)}</span>
-              </div>
-              <div style={{ marginTop: 8, height: 3, width: 64, background: "rgba(244,244,244,0.13)", borderRadius: 2, overflow: "hidden" }}>
-                <div style={{ width: `${d.v * 100}%`, height: "100%", background: "linear-gradient(90deg, var(--accent-2), var(--accent))" }} />
-              </div>
+        {assessmentComplete ? (
+          <>
+            <h2 className="display" style={{
+              fontSize: 52, fontWeight: 400, margin: 0,
+              letterSpacing: "-0.035em", lineHeight: 1, maxWidth: 520,
+            }}>
+              Your archetype
+            </h2>
+            <p className="display-italic" style={{
+              margin: "16px 0 28px", fontSize: 18,
+              color: "rgba(234,241,236,0.7)", maxWidth: 480, lineHeight: 1.45,
+            }}>
+              IRIS is composing your reading.
+            </p>
+            <div style={{ display: "flex", gap: 28, alignItems: "flex-end" }}>
+              {["Cognitive", "Emotional", "Volitional", "Relational", "Existential"].map((label) => (
+                <div key={label}>
+                  <div style={{ fontSize: 10, letterSpacing: "0.08em", color: "rgba(234,241,236,0.5)", textTransform: "uppercase", marginBottom: 8 }}>{label}</div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                    <span className="mono" style={{ fontSize: 18, fontWeight: 500 }}>—</span>
+                  </div>
+                  <div style={{ marginTop: 8, height: 3, width: 64, background: "rgba(244,244,244,0.13)", borderRadius: 2, overflow: "hidden" }} />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        ) : (
+          <>
+            <h2 className="display" style={{
+              fontSize: 52, fontWeight: 400, margin: 0,
+              letterSpacing: "-0.035em", lineHeight: 1, maxWidth: 520,
+            }}>
+              Begin your reading
+            </h2>
+            <p className="display-italic" style={{
+              margin: "16px 0 28px", fontSize: 18,
+              color: "rgba(234,241,236,0.7)", maxWidth: 480, lineHeight: 1.45,
+            }}>
+              Your Engram emerges through reflection — not a quiz. Start when you're ready.
+            </p>
+          </>
+        )}
 
         <div style={{ marginTop: 28, display: "inline-flex", alignItems: "center", gap: 10, padding: "10px 18px", borderRadius: 999, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}>
-          <span style={{ fontSize: 13 }}>Open your Engram profile</span>
+          <span style={{ fontSize: 13 }}>{assessmentComplete ? "Open your Engram profile" : "Take the IRIS reading →"}</span>
           <IconArrowRight size={14} />
         </div>
       </div>
@@ -240,10 +272,12 @@ function PathCard({ n, icon, title, sub, time, tint, onClick }) {
   );
 }
 
-function MoodTrendCard({ onClick }) {
-  const points = [0.5, 0.4, 0.55, 0.7, 0.45, 0.6, 0.65, 0.55, 0.75, 0.7, 0.6, 0.65, 0.55, 0.7];
+function MoodTrendCard({ onClick, points = [] }) {
   const w = 480, h = 100;
-  const path = points.map((p, i) => `${i === 0 ? "M" : "L"} ${(i / (points.length - 1)) * w},${h - p * h}`).join(" ");
+  const hasData = Array.isArray(points) && points.length >= 2;
+  const path = hasData
+    ? points.map((p, i) => `${i === 0 ? "M" : "L"} ${(i / (points.length - 1)) * w},${h - p * h}`).join(" ")
+    : "";
   return (
     <div onClick={onClick} style={{
       background: "var(--bg-card)",
@@ -258,38 +292,46 @@ function MoodTrendCard({ onClick }) {
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
         <div>
-          <div className="label">14 days · gently rising</div>
+          <div className="label">{hasData ? "Last 7 days" : "Mood trend"}</div>
           <div className="display" style={{ fontSize: 28, fontWeight: 400, marginTop: 6, letterSpacing: "-0.02em" }}>
-            +12% mood
+            {hasData ? "Your rhythm" : "—"}
           </div>
-          <div style={{ fontSize: 13, color: "var(--ink-3)", marginTop: 4 }}>You showed up on 12 of 14 days.</div>
+          <div style={{ fontSize: 13, color: "var(--ink-3)", marginTop: 4 }}>
+            {hasData ? `You showed up on ${points.length} of 7 days.` : "Your mood will land here once you check in."}
+          </div>
         </div>
         <div style={{ display: "flex", gap: 6 }}>
           <Pill>Insights →</Pill>
         </div>
       </div>
-      <svg width="100%" height={h + 20} viewBox={`0 -10 ${w} ${h + 20}`} preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="mt" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.32" />
-            <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path d={`${path} L ${w},${h} L 0,${h} Z`} fill="url(#mt)" />
-        <path d={path} fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
-        {points.map((p, i) => (
-          <circle key={i} cx={(i / (points.length - 1)) * w} cy={h - p * h}
-            r={i === points.length - 1 ? 6 : 0}
-            fill={i === points.length - 1 ? "var(--accent)" : "transparent"}
-            stroke={i === points.length - 1 ? "var(--bg-card)" : "transparent"}
-            strokeWidth="3" />
-        ))}
-      </svg>
+      {hasData ? (
+        <svg width="100%" height={h + 20} viewBox={`0 -10 ${w} ${h + 20}`} preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="mt" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.32" />
+              <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d={`${path} L ${w},${h} L 0,${h} Z`} fill="url(#mt)" />
+          <path d={path} fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+          {points.map((p, i) => (
+            <circle key={i} cx={(i / (points.length - 1)) * w} cy={h - p * h}
+              r={i === points.length - 1 ? 6 : 0}
+              fill={i === points.length - 1 ? "var(--accent)" : "transparent"}
+              stroke={i === points.length - 1 ? "var(--bg-card)" : "transparent"}
+              strokeWidth="3" />
+          ))}
+        </svg>
+      ) : (
+        <div style={{ height: h + 20, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ink-4)", fontSize: 13, fontStyle: "italic", border: "1px dashed var(--line)", borderRadius: 12 }}>
+          Your line emerges with each check-in.
+        </div>
+      )}
     </div>
   );
 }
 
-function IRISObservationCard({ onClick }) {
+function IRISObservationCard({ onClick, hasInsights = false }) {
   return (
     <div onClick={onClick} style={{
       borderRadius: "var(--r-lg)",
@@ -306,14 +348,16 @@ function IRISObservationCard({ onClick }) {
     >
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <IrisAvatar size={32} />
-        <div className="label" style={{ color: "var(--accent)" }}>What IRIS noticed today</div>
+        <div className="label" style={{ color: "var(--accent)" }}>{hasInsights ? "What IRIS noticed today" : "IRIS, listening"}</div>
       </div>
       <p className="display-italic" style={{ fontSize: 19, color: "var(--ink)", margin: 0, lineHeight: 1.45, letterSpacing: "-0.005em" }}>
-        Your evenings are gentler when there's been any movement. Even a ten-minute walk shows up in tomorrow morning.
+        {hasInsights
+          ? "Open the conversation to read today's reflection."
+          : "IRIS will share observations after a few sessions."}
       </p>
       <div style={{ display: "flex", gap: 8, marginTop: "auto", paddingTop: 8 }}>
         <span style={{ fontSize: 13, color: "var(--accent)", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 6 }}>
-          Talk to IRIS about it <IconArrowRight size={14} />
+          {hasInsights ? "Talk to IRIS about it" : "Begin a conversation"} <IconArrowRight size={14} />
         </span>
       </div>
     </div>

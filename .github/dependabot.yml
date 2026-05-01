@@ -1,0 +1,70 @@
+# Dependabot config — Engram
+# Owned: mythos-code (Threat Scanner)
+# Scans both root (client) and /server (Cloudflare Worker) ecosystems weekly.
+
+version: 2
+updates:
+  # Client / Capacitor / Vite / React
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Rome"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "client"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    groups:
+      capacitor:
+        patterns:
+          - "@capacitor/*"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      vite:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+    ignore:
+      # Pin majors; only patch/minor auto-PR
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Server / Hono / Anthropic SDK / Better Auth / Wrangler
+  - package-ecosystem: "npm"
+    directory: "/server"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Rome"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "server"
+      - "edge-worker"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    # Server-side Anthropic SDK + Hono get majors too — security-critical
+    allow:
+      - dependency-type: "all"
+
+  # GitHub Actions hygiene
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "chore(ci)"

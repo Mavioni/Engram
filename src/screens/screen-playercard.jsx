@@ -1,6 +1,18 @@
 // Player Card — premium edition: editorial layout, hand-set type, depth, ritual
 
 function PlayerCardScreen({ onNavigate }) {
+  const useStore = window.useUserStore;
+  const assessmentComplete = (useStore && useStore((s) => s.assessmentComplete)) || false;
+  const archetype = (useStore && useStore((s) => s.archetype)) || null;
+
+  const sealStamp = formatPlayerCardStamp(new Date());
+
+  if (!assessmentComplete) {
+    return (
+      <PlayerCardEmptyState onNavigate={onNavigate} />
+    );
+  }
+
   return (
     <div className="scrollbar-hide" style={{ height: "100%", overflow: "auto", padding: "28px 44px 80px", background: "var(--bg)" }}>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
@@ -8,9 +20,9 @@ function PlayerCardScreen({ onNavigate }) {
           <IconArrowLeft size={16} /> Dashboard
         </button>
         <div style={{ display: "inline-flex", alignItems: "center", gap: 12 }}>
-          <span className="label">Engram · v4 · IRIS-derived</span>
+          <span className="label">Engram · IRIS-derived</span>
           <span style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--ink-4)" }} />
-          <span className="mono" style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: "0.06em" }}>SEAL · MMXXVI · 04.30</span>
+          <span className="mono" style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: "0.06em" }}>{sealStamp}</span>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <Button variant="ghost" size="sm">Re-take</Button>
@@ -46,43 +58,28 @@ function PlayerCardScreen({ onNavigate }) {
         {/* Top meta strip */}
         <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, paddingBottom: 24, borderBottom: "1px solid rgba(234,241,236,0.1)" }}>
           <div className="mono" style={{ fontSize: 11, color: "rgba(234,241,236,0.55)", letterSpacing: "0.12em" }}>
-            ENGRAM · 04 ⁄ 24
+            ENGRAM
           </div>
           <div className="mono" style={{ fontSize: 11, color: "rgba(234,241,236,0.55)", letterSpacing: "0.12em" }}>
-            ARCHETYPE · WORLD No. 142
+            ARCHETYPE · {archetype?.name?.toUpperCase() ?? "—"}
           </div>
           <div className="mono" style={{ fontSize: 11, color: "rgba(234,241,236,0.55)", letterSpacing: "0.12em" }}>
-            VECTOR · 0.847 LK
+            VECTOR · {archetype?.vector != null ? archetype.vector.toFixed(3) : "—"}
           </div>
         </div>
 
         <div style={{ position: "relative", display: "grid", gridTemplateColumns: "1fr auto", gap: 56, alignItems: "center" }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22 }}>
-              <span className="mono" style={{ fontSize: 13, color: "rgba(234,241,236,0.7)", letterSpacing: "0.16em" }}>04 · w5 · sp/sx</span>
-              <span style={{ width: 24, height: 1, background: "rgba(234,241,236,0.3)" }} />
-              <span className="display-italic" style={{ fontSize: 16, color: "rgba(234,241,236,0.8)" }}>"individuant"</span>
+              <span className="mono" style={{ fontSize: 13, color: "rgba(234,241,236,0.7)", letterSpacing: "0.16em" }}>{archetype?.code ?? "—"}</span>
             </div>
             <h1 className="display" style={{ fontSize: 76, fontWeight: 400, margin: 0, letterSpacing: "-0.04em", lineHeight: 0.95 }}>
-              The Lighthouse<br/>
-              <span className="display-italic" style={{ fontWeight: 400 }}>Keeper</span>
+              {archetype?.name ?? "Your archetype"}
             </h1>
             <div style={{ height: 1, width: 80, background: "rgba(234,241,236,0.4)", margin: "32px 0" }} />
             <p className="display-italic" style={{ fontSize: 22, color: "rgba(234,241,236,0.78)", margin: 0, maxWidth: 560, lineHeight: 1.5, letterSpacing: "-0.005em" }}>
-              You hold steady so others can find their way. Sensitivity disguised as solitude. Inner depth misread as distance.
+              IRIS is composing your reading. Your archetype emerges through reflection — it isn't fixed at first read.
             </p>
-            <div style={{ display: "flex", gap: 8, marginTop: 32 }}>
-              {["introspective", "quietly intense", "orienting", "loyal"].map(t => (
-                <span key={t} style={{
-                  padding: "8px 14px", borderRadius: 999,
-                  background: "rgba(255,255,255,0.07)",
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  fontSize: 12, fontWeight: 500,
-                  color: "rgba(234,241,236,0.95)",
-                  letterSpacing: "0.02em",
-                }}>{t}</span>
-              ))}
-            </div>
           </div>
           <SacredMarkLarge />
         </div>
@@ -92,19 +89,19 @@ function PlayerCardScreen({ onNavigate }) {
           <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
             <div>
               <div className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", color: "rgba(234,241,236,0.5)" }}>RARITY</div>
-              <div className="display" style={{ fontSize: 18, marginTop: 4, fontWeight: 500 }}>1 in 47</div>
+              <div className="display" style={{ fontSize: 18, marginTop: 4, fontWeight: 500 }}>—</div>
             </div>
             <div>
               <div className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", color: "rgba(234,241,236,0.5)" }}>DRIFT (90d)</div>
-              <div className="display" style={{ fontSize: 18, marginTop: 4, fontWeight: 500 }}>+0.04 ↑</div>
+              <div className="display" style={{ fontSize: 18, marginTop: 4, fontWeight: 500 }}>—</div>
             </div>
             <div>
               <div className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", color: "rgba(234,241,236,0.5)" }}>CONFIDENCE</div>
-              <div className="display" style={{ fontSize: 18, marginTop: 4, fontWeight: 500 }}>0.92</div>
+              <div className="display" style={{ fontSize: 18, marginTop: 4, fontWeight: 500 }}>—</div>
             </div>
           </div>
           <div className="display-italic" style={{ fontSize: 13, color: "rgba(234,241,236,0.55)" }}>
-            updated each Sunday
+            emerges with each session
           </div>
         </div>
       </div>
@@ -116,19 +113,11 @@ function PlayerCardScreen({ onNavigate }) {
           <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
             <RadarChart />
             <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
-              {[
-                { l: "Cognitive", v: 0.78, note: "Pattern-led" },
-                { l: "Emotional", v: 0.62, note: "Deep current" },
-                { l: "Volitional", v: 0.71, note: "Quiet stubborn" },
-                { l: "Relational", v: 0.55, note: "Close circle" },
-                { l: "Existential", v: 0.84, note: "Meaning-driven" },
-              ].map((d, i) => (
+              {["Cognitive", "Emotional", "Volitional", "Relational", "Existential"].map((label, i) => (
                 <div key={i} style={{ display: "grid", gridTemplateColumns: "90px 1fr 50px", alignItems: "center", gap: 10, fontSize: 13 }}>
-                  <div style={{ color: "var(--ink-2)", fontWeight: 500 }}>{d.l}</div>
-                  <div style={{ height: 3, background: "var(--bg-soft)", borderRadius: 2, position: "relative" }}>
-                    <div style={{ position: "absolute", inset: 0, width: `${d.v * 100}%`, background: `linear-gradient(90deg, var(--accent-soft), var(--accent))`, borderRadius: 2 }} />
-                  </div>
-                  <div className="mono" style={{ fontSize: 12, color: "var(--ink-3)", textAlign: "right" }}>{d.v.toFixed(2)}</div>
+                  <div style={{ color: "var(--ink-2)", fontWeight: 500 }}>{label}</div>
+                  <div style={{ height: 3, background: "var(--bg-soft)", borderRadius: 2, position: "relative" }} />
+                  <div className="mono" style={{ fontSize: 12, color: "var(--ink-3)", textAlign: "right" }}>—</div>
                 </div>
               ))}
             </div>
@@ -147,89 +136,108 @@ function PlayerCardScreen({ onNavigate }) {
         </Card>
       </div>
 
-      {/* Facets — editorial grid */}
+      {/* Facets — editorial grid (placeholder until IRIS readings populate) */}
       <Card style={{ marginBottom: 28, padding: 36 }}>
         <SectionHeader title="The 24 facets" eyebrow="High signal · low signal · counter-balance" action={<Pill>Browse all →</Pill>} />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 24 }}>
-          {[
-            { n: "Reflection", v: 0.92, t: "high", note: "you stay with questions" },
-            { n: "Aesthetic sense", v: 0.88, t: "high", note: "form matters to you" },
-            { n: "Loyalty", v: 0.81, t: "high", note: "long horizons" },
-            { n: "Inner sovereignty", v: 0.79, t: "high", note: "self-authored" },
-            { n: "Conflict tolerance", v: 0.34, t: "low", note: "you avoid heat" },
-            { n: "Public visibility", v: 0.28, t: "low", note: "private engine" },
-            { n: "Repair instinct", v: 0.66, t: "mid", note: "good first try" },
-            { n: "Domain bravery", v: 0.71, t: "high", note: "go your own way" },
-          ].map((f, i) => {
-            const accent = f.t === "high" ? "var(--accent)" : f.t === "low" ? "var(--plum)" : "var(--warm)";
-            return (
-              <div key={i} style={{ borderLeft: `2px solid ${accent}`, paddingLeft: 16, paddingTop: 4, paddingBottom: 4 }}>
-                <div className="mono" style={{ fontSize: 9, letterSpacing: "0.12em", color: "var(--ink-4)", marginBottom: 6 }}>{String(i+1).padStart(2,"0")} · {f.t.toUpperCase()}</div>
-                <div className="display" style={{ fontSize: 16, fontWeight: 500, marginBottom: 6, letterSpacing: "-0.01em" }}>{f.n}</div>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
-                  <span className="mono" style={{ fontSize: 18, fontWeight: 500 }}>{f.v.toFixed(2)}</span>
-                  <div style={{ flex: 1, height: 2, background: "var(--bg-soft)", borderRadius: 1 }}>
-                    <div style={{ width: `${f.v * 100}%`, height: "100%", background: accent, borderRadius: 1 }} />
-                  </div>
-                </div>
-                <div className="display-italic" style={{ fontSize: 12, color: "var(--ink-3)", lineHeight: 1.4 }}>{f.note}</div>
-              </div>
-            );
-          })}
+        <div style={{ padding: "32px 0", textAlign: "center", color: "var(--ink-3)", fontSize: 14, fontStyle: "italic" }}>
+          Facets emerge as IRIS gathers signal. Keep showing up.
         </div>
       </Card>
 
-      {/* Narrative — pull quote */}
+      {/* Narrative — IRIS reading (waits for real reading) */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 28 }}>
         <Card style={{ padding: 36, background: "linear-gradient(135deg, color-mix(in oklab, var(--accent) 10%, var(--bg-card)), var(--bg-card))" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
             <IrisAvatar size={28} />
             <div className="label">IRIS' reading</div>
           </div>
-          <p className="display-italic" style={{ fontSize: 22, lineHeight: 1.5, margin: 0, color: "var(--ink)", maxWidth: 540, letterSpacing: "-0.005em" }}>
-            "You arrived here through reflection, not through asking. Your attention is itself a gift — but the cost of that attention is occasional withdrawal."
-          </p>
-          <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--ink-2)", marginTop: 20, maxWidth: 540 }}>
-            Your work this season is not to perform more, but to let your closest few people see how steady you actually are.
+          <p className="display-italic" style={{ fontSize: 18, lineHeight: 1.55, margin: 0, color: "var(--ink-2)", maxWidth: 540, letterSpacing: "-0.005em" }}>
+            Your reading is composed from the conversations you bring. After a few sessions, IRIS will offer one here.
           </p>
         </Card>
         <Card style={{ padding: 36 }}>
           <SectionHeader title="What this season asks of you" />
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {[
-              { n: "01", t: "Be seen by one person, slowly." },
-              { n: "02", t: "Stay with discomfort 90 seconds longer." },
-              { n: "03", t: "Make something small, share it before it's ready." },
-            ].map((x, i) => (
-              <div key={i} style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 18, alignItems: "baseline", paddingBottom: 14, borderBottom: i < 2 ? "1px solid var(--line)" : "none" }}>
-                <span className="mono" style={{ fontSize: 12, color: "var(--ink-4)", letterSpacing: "0.08em" }}>{x.n}</span>
-                <span className="display" style={{ fontSize: 17, fontWeight: 400, letterSpacing: "-0.01em", lineHeight: 1.4 }}>{x.t}</span>
-              </div>
-            ))}
+          <div style={{ padding: "24px 0", color: "var(--ink-3)", fontSize: 14, fontStyle: "italic" }}>
+            Three intentions land here once your archetype settles.
           </div>
         </Card>
       </div>
 
-      {/* Companions */}
+      {/* Companions placeholder */}
       <Card style={{ padding: 36 }}>
         <SectionHeader title="Companions in your archetype" eyebrow="People you might recognize" />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-          {[
-            { n: "Mary Oliver", r: "the noticing", c: "var(--accent)" },
-            { n: "Tarkovsky", r: "patient depth", c: "var(--plum)" },
-            { n: "James Baldwin", r: "moral clarity", c: "var(--warm)" },
-            { n: "Agnes Martin", r: "quiet making", c: "var(--sky)" },
-          ].map((p, i) => (
-            <div key={i} style={{ padding: 18, borderRadius: 14, background: "var(--bg-soft)" }}>
-              <div style={{ width: 36, height: 36, borderRadius: "50%", background: `radial-gradient(circle at 35% 30%, color-mix(in oklab, ${p.c} 50%, white), ${p.c})`, marginBottom: 12 }} />
-              <div className="display" style={{ fontSize: 15, fontWeight: 500, letterSpacing: "-0.01em" }}>{p.n}</div>
-              <div className="display-italic" style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>{p.r}</div>
-            </div>
-          ))}
+        <div style={{ padding: "24px 0", color: "var(--ink-3)", fontSize: 14, fontStyle: "italic", textAlign: "center" }}>
+          Companions appear once IRIS confirms your archetype.
         </div>
       </Card>
     </div>
   );
+}
+
+function PlayerCardEmptyState({ onNavigate }) {
+  return (
+    <div className="scrollbar-hide" style={{ height: "100%", overflow: "auto", padding: "28px 44px 80px", background: "var(--bg)" }}>
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <button onClick={() => onNavigate("dashboard")} style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--ink-3)", fontSize: 13 }}>
+          <IconArrowLeft size={16} /> Dashboard
+        </button>
+        <div className="label">Engram · awaiting your first reading</div>
+        <div style={{ width: 120 }} />
+      </header>
+
+      <div className="scale-in" style={{
+        position: "relative",
+        borderRadius: "var(--r-2xl)",
+        background: "linear-gradient(135deg, #0A0A0A 0%, #1A1A1A 50%, color-mix(in oklab, var(--accent) 28%, #1A1A1A) 100%)",
+        color: "#F4F4F4",
+        padding: "72px 64px",
+        overflow: "hidden",
+        boxShadow: "0 32px 80px rgba(20,30,24,0.24), 0 0 0 1px rgba(0,0,0,0.04)",
+        display: "grid", gridTemplateColumns: "1fr auto", gap: 56, alignItems: "center",
+        minHeight: 420,
+      }}>
+        <div style={{ position: "absolute", right: -120, top: -120, width: 460, height: 460, borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(168,213,184,0.36), transparent 60%)" }} />
+        <div style={{ position: "absolute", left: -80, bottom: -160, width: 320, height: 320, borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(232,201,168,0.18), transparent 60%)" }} />
+
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <div className="mono" style={{ fontSize: 11, color: "rgba(234,241,236,0.55)", letterSpacing: "0.16em", marginBottom: 24 }}>
+            BEGIN · IRIS ASSESSMENT
+          </div>
+          <h1 className="display" style={{ fontSize: 64, fontWeight: 400, margin: 0, letterSpacing: "-0.04em", lineHeight: 1.0 }}>
+            Your archetype<br/>
+            <span className="display-italic">emerges here.</span>
+          </h1>
+          <p className="display-italic" style={{ fontSize: 20, color: "rgba(234,241,236,0.78)", margin: "28px 0 0", maxWidth: 540, lineHeight: 1.5 }}>
+            Engram reads the texture of how you reflect, not a fixed quiz. Begin a conversation with IRIS — your reading composes itself.
+          </p>
+          <button
+            onClick={() => onNavigate("chat")}
+            style={{
+              marginTop: 36,
+              display: "inline-flex", alignItems: "center", gap: 10,
+              padding: "14px 22px", borderRadius: 999,
+              background: "rgba(255,255,255,0.10)",
+              border: "1px solid rgba(255,255,255,0.16)",
+              color: "#F4F4F4", fontSize: 14, fontWeight: 500,
+              cursor: "pointer",
+              transition: "all 200ms var(--ease)",
+            }}
+          >
+            Begin your IRIS assessment <IconArrowRight size={14} />
+          </button>
+        </div>
+        <SacredMarkLarge />
+      </div>
+    </div>
+  );
+}
+
+function formatPlayerCardStamp(date) {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `SEAL · ${date.getFullYear()} · ${month}.${day}`;
 }
 
 function RadarChart() {
