@@ -12,7 +12,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "engram"
-database_id = "TODO_OPERATOR_FILL"  # run: wrangler d1 create engram → paste UUID here
+database_id = "ba2037a1-717c-4708-ae7c-f4f321db513a"
 
 [vars]
 # Non-secret env vars only. Secrets go through `wrangler secret put`.
