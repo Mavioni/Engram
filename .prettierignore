@@ -1,0 +1,19 @@
+dist
+ios
+android
+.wrangler
+node_modules
+
+# Visual artifacts — preserve byte-for-byte
+*.png
+screenshots/
+prototype.html
+
+# Lockfiles
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Generated
+*.min.js
+*.min.css

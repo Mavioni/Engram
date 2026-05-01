@@ -1,0 +1,24 @@
+# Engram API — Cloudflare Workers config
+# Secrets via `wrangler secret put ANTHROPIC_API_KEY` + BETTER_AUTH_SECRET — never commit.
+
+name = "engram-api"
+main = "src/index.ts"
+compatibility_date = "2026-04-15"
+compatibility_flags = ["nodejs_compat"]
+
+# Workers route configured later (custom domain / route binding via dashboard or CLI).
+# workers_dev = true  # for ephemeral dev URL
+
+[[d1_databases]]
+binding = "DB"
+database_name = "engram"
+database_id = "TODO_OPERATOR_FILL"  # run: wrangler d1 create engram → paste UUID here
+
+[vars]
+# Non-secret env vars only. Secrets go through `wrangler secret put`.
+ENVIRONMENT = "development"
+BETTER_AUTH_URL = "http://localhost:8787"
+
+# --- Required secrets (set via CLI, never in this file) ---
+# wrangler secret put ANTHROPIC_API_KEY
+# wrangler secret put BETTER_AUTH_SECRET

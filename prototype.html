@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-accent="lavender" data-density="normal" data-font="serif-display">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Engram</title>
+<link rel="stylesheet" href="styles.css" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  html, body, #root { height: 100%; margin: 0; }
+  body { background: #0A0A0A; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="screen-onboarding.jsx"></script>
+<script type="text/babel" src="screen-chat.jsx"></script>
+<script type="text/babel" src="screen-dashboard.jsx"></script>
+<script type="text/babel" src="screen-checkin.jsx"></script>
+<script type="text/babel" src="screen-journal.jsx"></script>
+<script type="text/babel" src="screen-meditation.jsx"></script>
+<script type="text/babel" src="screen-insights.jsx"></script>
+<script type="text/babel" src="screen-playercard.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "theme": "dark",
+  "accent": "ocean",
+  "density": "normal",
+  "font": "serif-display",
+  "moodViz": "orb",
+  "playerCardLayout": "hero"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [screen, setScreen] = useState("chat"); // start: chat per user
+
+  // Apply tweaks to root
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.theme = tweaks.theme;
+    root.dataset.accent = tweaks.accent;
+    root.dataset.density = tweaks.density;
+    root.dataset.font = tweaks.font;
+  }, [tweaks]);
+
+  const navItems = [
+    { id: "dashboard", label: "Today", icon: IconHome },
+    { id: "chat", label: "IRIS", icon: IconChat },
+    { id: "journal", label: "Journal", icon: IconBook },
+    { id: "meditation", label: "Practice", icon: IconMoon },
+    { id: "insights", label: "Insights", icon: IconChart },
+    { id: "playercard", label: "Engram", icon: IconCard },
+  ];
+
+  const renderScreen = () => {
+    switch (screen) {
+      case "onboarding": return <OnboardingScreen onComplete={() => setScreen("chat")} />;
+      case "chat": return <ChatScreen onNavigate={setScreen} />;
+      case "dashboard": return <DashboardScreen onNavigate={setScreen} />;
+      case "checkin": return <CheckinScreen onNavigate={setScreen} />;
+      case "journal": return <JournalScreen onNavigate={setScreen} />;
+      case "meditation": return <MeditationScreen onNavigate={setScreen} />;
+      case "insights": return <InsightsScreen onNavigate={setScreen} />;
+      case "playercard": return <PlayerCardScreen onNavigate={setScreen} />;
+      default: return <ChatScreen onNavigate={setScreen} />;
+    }
+  };
+
+  return (
+    <div style={{ position: "relative", height: "100vh", width: "100%", overflow: "hidden", background: "var(--bg)" }} data-screen-label={screen}>
+      {renderScreen()}
+      {!["onboarding", "checkin", "meditation"].includes(screen) && (
+        <NavBar active={screen} onChange={setScreen} items={navItems} />
+      )}
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="Appearance">
+          <TweakRadio label="Theme" value={tweaks.theme} onChange={(v) => setTweak("theme", v)}
+            options={[{ value: "light", label: "Light" }, { value: "dark", label: "Dark" }]} />
+          <TweakRadio label="Accent" value={tweaks.accent} onChange={(v) => setTweak("accent", v)}
+            options={[
+              { value: "sage", label: "Sage" },
+              { value: "lavender", label: "Lavender" },
+              { value: "peach", label: "Peach" },
+              { value: "amber", label: "Amber" },
+              { value: "ocean", label: "Ocean" },
+            ]} />
+          <TweakRadio label="Density" value={tweaks.density} onChange={(v) => setTweak("density", v)}
+            options={[{ value: "compact", label: "Compact" }, { value: "normal", label: "Normal" }, { value: "comfy", label: "Comfy" }]} />
+          <TweakSelect label="Typography" value={tweaks.font} onChange={(v) => setTweak("font", v)}
+            options={[
+              { value: "serif-display", label: "Fraunces + Inter (default)" },
+              { value: "all-sans", label: "Inter only" },
+              { value: "mono-touch", label: "Inter + IBM Plex" },
+            ]} />
+        </TweakSection>
+
+        <TweakSection title="Navigation">
+          <TweakButton label="Onboarding" onClick={() => setScreen("onboarding")}>View →</TweakButton>
+          <TweakButton label="Mood check-in flow" onClick={() => setScreen("checkin")}>Open →</TweakButton>
+        </TweakSection>
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

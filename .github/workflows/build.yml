@@ -1,0 +1,71 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Job 1: Lint, typecheck, build, capacitor sync
+  # ─────────────────────────────────────────────
+  ci:
+    name: Lint / Typecheck / Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Capacitor sync (web assets only)
+        # Syncs built web dist into native project folders if they exist.
+        # Native compilation itself is handled by the platform-specific workflows
+        # owned by mythos-minato (ios.yml / android.yml).
+        # TODO: enable after Apple/Google signing setup
+        run: npm run sync
+
+  # ─────────────────────────────────────────────
+  # Job 2: Playwright e2e — Chromium only
+  # ─────────────────────────────────────────────
+  e2e:
+    name: E2E (Chromium)
+    runs-on: ubuntu-latest
+    needs: ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: npm run test:e2e -- --project=chromium
