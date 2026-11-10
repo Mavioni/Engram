@@ -124,7 +124,7 @@ export class D1ErsEventRepository {
       throw new Error("invalid ERS event sensitivity");
     }
 
-    if (!isErsProvenanceKind(event.provenance?.kind) || typeof event.provenance.source !== "string" || !event.provenance.source.trim() || event.provenance.source.length > 300 || !isCanonicalIso(event.provenance.recordedAt)) {
+    if (!isErsProvenanceKind(event.provenance.kind) || typeof event.provenance.source !== "string" || !event.provenance.source.trim() || event.provenance.source.length > 300 || !isCanonicalIso(event.provenance.recordedAt)) {
       throw new Error("invalid ERS event provenance");
     }
     if (event.contextId && event.contextId.length > 128) throw new Error("invalid ERS event context");
