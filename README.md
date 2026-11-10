@@ -6,7 +6,7 @@ This repository contains the existing Engram mobile/web client and Cloudflare Wo
 
 ## Company and product boundary
 
-Revenant A.I. LLC is the company designated by the user to develop and steward Engram. Corporate registration, current good standing, ownership records, and any Arizona qualification or domestication remain separate legal matters and are not inferred from this software repository.
+Revenant A.I. LLC is the parent company designated by the user to develop and steward Engram, with Wyoming stated as its formation jurisdiction. The exact filed entity record, current good standing, ownership records, and any Arizona foreign qualification or domestication must be verified against official records before company contracts or filings. This software repository does not establish legal status.
 
 Engram is the flagship platform. External AI providers are vendors or technology integrations—not the owner of Engram's identity, data, memory, policy, or control plane.
 
