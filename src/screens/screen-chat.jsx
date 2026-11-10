@@ -27,6 +27,8 @@ function ChatScreen({ onNavigate }) {
   const [messages, setMessages] = useState(seedMessages);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
+  const [useMemory, setUseMemory] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -34,31 +36,44 @@ function ChatScreen({ onNavigate }) {
   }, [messages, typing]);
 
   const send = async (text) => {
-    if (!text.trim()) return;
-    setMessages((m) => [...m, { role: "user", text }]);
+    if (!text.trim() || typing) return;
+    const transcript = [...messages, { role: "user", text }];
+    setMessages(transcript);
     setInput("");
     setTyping(true);
 
-    // TODO(orochimaru): wire to /api/iris streaming with prompt-cached system + thread prefix.
     try {
-      const res = await fetch("/api/iris", {
+      const res = await fetch("/api/intelligence", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({
+          messages: transcript.map((message) => ({
+            role: message.role === "iris" ? "assistant" : "user",
+            content: message.text,
+          })).filter((message) => message.content && message.content.trim()),
+          ...(sessionId ? { sessionId } : {}),
+          useMemory,
+        }),
       });
-      if (res.ok) {
-        const payload = await res.json();
-        setTyping(false);
-        setMessages((m) => [...m, { role: "iris", text: payload.text, chips: payload.chips }]);
-        return;
-      }
-    } catch {
-      /* fall through to MVP-1 placeholder */
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.error || "Engram Intelligence request failed");
+      if (payload.sessionId) setSessionId(payload.sessionId);
+      setTyping(false);
+      setMessages((current) => [...current, {
+        role: "iris",
+        text: payload.content || "I could not produce a response this time.",
+        chips: SUGGESTED_REPLIES_FOLLOWUP,
+      }]);
+      return;
+    } catch (error) {
+      console.error("[engram-chat] request failed", error);
     }
+
     setTyping(false);
-    setMessages((m) => [...m, {
+    setMessages((current) => [...current, {
       role: "iris",
-      text: "I'm here. (IRIS will respond once you finish setup.)",
+      text: "Engram Intelligence is temporarily unavailable. Your message has not received a response.",
       chips: SUGGESTED_REPLIES_FOLLOWUP,
     }]);
   };
@@ -179,8 +194,12 @@ function ChatScreen({ onNavigate }) {
             <IconSend size={17} />
           </button>
         </div>
-        <div style={{ display: "flex", justifyContent: "center", marginTop: 10, fontSize: 11, color: "var(--ink-4)" }}>
-          End-to-end encrypted · IRIS won't remember unless you ask her to
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 10, fontSize: 11, color: "var(--ink-4)" }}>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+            <input type="checkbox" checked={useMemory} onChange={(event) => setUseMemory(event.target.checked)} />
+            Use saved Engram memory in this conversation
+          </label>
+          <span>Memory is off unless enabled here.</span>
         </div>
       </div>
     </div>
