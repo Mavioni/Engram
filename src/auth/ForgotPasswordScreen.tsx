@@ -1,4 +1,4 @@
-// ForgotPasswordScreen — magic-link reset via Better Auth's forgetPassword.
+// ForgotPasswordScreen — magic-link reset via Better Auth's requestPasswordReset.
 
 import { useState } from "react";
 import { useAuth } from "./AuthProvider";
@@ -8,7 +8,7 @@ interface ForgotPasswordScreenProps {
 }
 
 export default function ForgotPasswordScreen({ onNavigateLogin }: ForgotPasswordScreenProps) {
-  const { forgetPassword } = useAuth();
+  const { requestPasswordReset } = useAuth();
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
@@ -20,7 +20,7 @@ export default function ForgotPasswordScreen({ onNavigateLogin }: ForgotPassword
     setSubmitting(true);
     setError(null);
     try {
-      await forgetPassword({ email: email.trim(), redirectTo: "/reset-password" });
+      await requestPasswordReset({ email: email.trim(), redirectTo: "/reset-password" });
       setSent(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send reset email.");
