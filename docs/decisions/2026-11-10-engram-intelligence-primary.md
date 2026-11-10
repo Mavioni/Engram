@@ -82,12 +82,12 @@ A capability ceiling is not itself an authority grant. Current authorization mus
 
 ## Implementation sequence
 
-1. Correct the prior principal name and preserve migration history with an additive migration.
-2. Integrate the principal into authenticated server context using a trusted tenant-resolution rule.
-3. Add tests for principal persistence, tenant isolation, malformed stored configuration, and capability-ceiling validation.
-4. Implement provider adapters only after data, cost, contract, and policy admission.
-5. Integrate session continuity and consent-aware memory retrieval/persistence.
-6. Route tool requests through durable tasks, policy checks, approvals, and audited runtime adapters.
-7. Expose Engram Intelligence state through E8 Presence using derived, authorized ERS views.
+1. [x] Correct the prior principal name and preserve migration history with an additive migration.
+2. [x] Integrate the principal into the authenticated conversation route using `personal:<authenticated-user-id>`; workspaces remain out of scope.
+3. [ ] Add D1 integration tests for idempotent principal creation, tenant isolation, malformed stored configuration, suspension, and capability-ceiling validation.
+4. [ ] Implement additional provider adapters only after data, cost, contract, and policy admission. Fugu is currently blocked by its published API terms.
+5. [ ] Integrate further session continuity and consent-aware memory retrieval/persistence.
+6. [ ] Route tool requests through durable tasks, policy checks, approvals, and audited runtime adapters.
+7. [ ] Expose Engram Intelligence state through E8 Presence using derived, authorized ERS views.
 
 No remote deployment, production secret configuration, or remote D1 migration is authorized by this ADR.
