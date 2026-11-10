@@ -158,8 +158,9 @@ export class D1EngramIntelligencePrincipalRepository {
         policyProfile: "default",
       }],
     };
+    const id = crypto.randomUUID();
     validateCreate({
-      id: crypto.randomUUID(),
+      id,
       tenantId,
       displayName: "Engram Intelligence",
       configuration,
@@ -172,7 +173,7 @@ export class D1EngramIntelligencePrincipalRepository {
         configuration_version, configuration_json, created_at, updated_at
       ) VALUES (?, ?, 'engram-intelligence', ?, 'active', ?, ?, ?, ?)`
     ).bind(
-      crypto.randomUUID(),
+      id,
       tenantId,
       "Engram Intelligence",
       configuration.version,
