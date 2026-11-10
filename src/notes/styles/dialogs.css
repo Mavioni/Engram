@@ -1,0 +1,286 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-modal);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(6px);
+}
+.modal-body {
+  width: 100%;
+  max-width: 680px;
+  max-height: 90dvh;
+  background: var(--bg-1);
+  border: 1px solid var(--bd-2);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 100px #0005;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 22px;
+  border-bottom: 1px solid var(--bd-1);
+  flex-shrink: 0;
+}
+.modal-header > .icon-button {
+  margin-left: auto;
+}
+.modal-scroll {
+  overflow: auto;
+  padding: 28px;
+  min-height: 0;
+}
+.modal-scroll h1 {
+  font-size: 35px;
+  line-height: 1.1;
+  margin: 6px 0 24px;
+  overflow-wrap: anywhere;
+}
+.entry-full-body {
+  font: 19px/1.8 var(--font-display);
+  white-space: pre-wrap;
+  color: var(--fg-1);
+  overflow-wrap: anywhere;
+  margin-bottom: 24px;
+}
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 15px 22px;
+  border-top: 1px solid var(--bd-1);
+}
+.modal-footer .danger-text {
+  margin-left: auto;
+}
+.field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--fg-2);
+  margin-bottom: 20px;
+}
+.field-label input,
+.field-label textarea {
+  width: 100%;
+  color: var(--fg-1);
+  background: var(--bg-2);
+}
+.delete-confirm {
+  padding: 16px;
+  border: 1px solid #ef444455;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+.delete-confirm p {
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+.danger {
+  color: #fff;
+  background: #9b3030;
+  padding: 11px 15px;
+  border-radius: 7px;
+  margin-right: 10px;
+}
+.danger-text {
+  color: #ef7777;
+}
+.iris-dialog {
+  height: 700px;
+}
+.iris-dialog .modal-header h2 {
+  font-size: 21px;
+}
+.iris-dialog .modal-header .iris-mini {
+  width: 30px;
+  height: 30px;
+}
+.iris-dialog .modal-header .iris-mini:after {
+  inset: 8px;
+}
+.iris-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.iris-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 22px;
+  margin: auto;
+  padding: 22px 0;
+  max-width: 350px;
+}
+.iris-welcome h2 {
+  font-size: 35px;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+}
+.iris-welcome p {
+  font-size: 13px;
+}
+.iris-composer {
+  border-top: 1px solid var(--bd-1);
+  padding: 16px 22px;
+}
+.memory-toggle {
+  font-size: 11px;
+  color: var(--fg-2);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.memory-toggle input {
+  accent-color: var(--accent);
+  margin: 2px 0 0;
+}
+.iris-composer form {
+  display: flex;
+  gap: 8px;
+}
+.iris-composer form input {
+  flex: 1;
+  font-size: 14px;
+}
+.iris-composer .fine-print {
+  margin-top: 10px;
+  font-size: 10px;
+}
+.error-message {
+  color: #ef8d8d !important;
+  font-size: 12px;
+}
+.error-banner {
+  background: #ef444414;
+  color: #ef9999;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 24px;
+  font-size: 12px;
+}
+.error-banner .icon-button {
+  border: 0;
+}
+.notice {
+  font-size: 12px;
+  margin-top: 15px;
+  color: var(--accent);
+}
+.loading-bar {
+  padding: 10px 24px;
+  font: 11px var(--font-mono);
+  color: var(--accent);
+}
+.vault-gate {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  padding: 24px clamp(22px, 5vw, 60px);
+  background: radial-gradient(ellipse at 50% 45%, var(--accent-soft), transparent 60%);
+}
+.gate-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  letter-spacing: 0.15em;
+}
+.gate-brand .label {
+  margin-left: auto;
+  font-size: 9px;
+}
+.gate-content {
+  width: 100%;
+  max-width: 390px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 40px 0;
+}
+.gate-icon {
+  width: 55px;
+  height: 55px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--bd-1));
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  margin-bottom: 28px;
+  background: var(--accent-soft);
+}
+.gate-content h1 {
+  font-size: 42px;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  margin: 13px 0 20px;
+}
+.gate-content > p {
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.gate-content form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.gate-content label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--fg-2);
+}
+.gate-content input {
+  background: var(--bg-1);
+  width: 100%;
+  font-size: 16px;
+  padding: 13px;
+}
+.gate-content .primary {
+  margin-top: 7px;
+  justify-content: space-between;
+}
+.gate-content > .fine-print {
+  font-size: 11px;
+  margin-top: 22px;
+  margin-bottom: 0;
+}
+.gate-content .text-button {
+  font-size: 12px;
+  text-align: left;
+  margin-top: 12px;
+}
+.vault-gate > footer {
+  font-size: 10px;
+  color: var(--fg-3);
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  padding: 15px 0;
+  line-height: 1.6;
+}
+.vault-gate > footer a {
+  color: var(--fg-3);
+}

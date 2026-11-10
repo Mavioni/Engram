@@ -35,29 +35,29 @@ declare global {
     createPortal: typeof ReactDOMNS.createPortal;
 
     // Screens
-    ChatScreen: ReactNS.ComponentType<any>;
-    DashboardScreen: ReactNS.ComponentType<any>;
-    OnboardingScreen: ReactNS.ComponentType<any>;
-    CheckinScreen: ReactNS.ComponentType<any>;
-    JournalScreen: ReactNS.ComponentType<any>;
-    MeditationScreen: ReactNS.ComponentType<any>;
-    InsightsScreen: ReactNS.ComponentType<any>;
-    PlayerCardScreen: ReactNS.ComponentType<any>;
+    ChatScreen: ReactNS.ComponentType<Record<string, unknown>>;
+    DashboardScreen: ReactNS.ComponentType<Record<string, unknown>>;
+    OnboardingScreen: ReactNS.ComponentType<Record<string, unknown>>;
+    CheckinScreen: ReactNS.ComponentType<Record<string, unknown>>;
+    JournalScreen: ReactNS.ComponentType<Record<string, unknown>>;
+    MeditationScreen: ReactNS.ComponentType<Record<string, unknown>>;
+    InsightsScreen: ReactNS.ComponentType<Record<string, unknown>>;
+    PlayerCardScreen: ReactNS.ComponentType<Record<string, unknown>>;
 
     // Chrome / navigation
-    NavBar: ReactNS.ComponentType<any>;
-    TopBar: ReactNS.ComponentType<any>;
-    ChromeWindow: ReactNS.ComponentType<any>;
-    SectionHeader: ReactNS.ComponentType<any>;
+    NavBar: ReactNS.ComponentType<Record<string, unknown>>;
+    TopBar: ReactNS.ComponentType<Record<string, unknown>>;
+    ChromeWindow: ReactNS.ComponentType<Record<string, unknown>>;
+    SectionHeader: ReactNS.ComponentType<Record<string, unknown>>;
 
     // Primitives
-    Card: ReactNS.ComponentType<any>;
-    Button: ReactNS.ComponentType<any>;
-    Pill: ReactNS.ComponentType<any>;
+    Card: ReactNS.ComponentType<Record<string, unknown>>;
+    Button: ReactNS.ComponentType<Record<string, unknown>>;
+    Pill: ReactNS.ComponentType<Record<string, unknown>>;
 
     // Visual artifacts
-    MoodOrb: ReactNS.ComponentType<any>;
-    IrisAvatar: ReactNS.ComponentType<any>;
+    MoodOrb: ReactNS.ComponentType<Record<string, unknown>>;
+    IrisAvatar: ReactNS.ComponentType<Record<string, unknown>>;
 
     // Index signature for additional prototype components registered via
     // Object.assign(window, ...) before App.tsx reads them. Keeps this

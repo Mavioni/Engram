@@ -22,6 +22,7 @@ export default [
   {
     ignores: [
       "dist/**",
+      "preview/alpha/**",
       "ios/**",
       "android/**",
       ".wrangler/**",
@@ -35,10 +36,15 @@ export default [
   // ── @eslint/js recommended (all targeted files) ────────────────────────────
   js.configs.recommended,
 
+  {
+    files: ["public/sw.js"],
+    languageOptions: { globals: { self: "readonly", caches: "readonly", fetch: "readonly", URL: "readonly", Response: "readonly" } },
+  },
+
   // ── TypeScript (typescript-eslint recommended set) ─────────────────────────
   ...tseslint.configs.recommended.map((cfg) => ({
     ...cfg,
-    files: ["src/**/*.{ts,tsx}", "server/src/**/*.ts"],
+    files: ["src/**/*.{ts,tsx}", "server/src/**/*.ts", "tests/**/*.ts", "*.ts"],
   })),
 
   // ── Frontend: src/**/*.{js,jsx,ts,tsx} ─────────────────────────────────────
@@ -84,6 +90,7 @@ export default [
       // Vite + React 17+ JSX transform: no need for React in scope.
       "react/react-in-jsx-scope": "off",
       "react/jsx-uses-react": "off",
+      "react/jsx-uses-vars": "error",
 
       // Hooks: rules-of-hooks must be hard-error.
       "react-hooks/rules-of-hooks": "error",
@@ -93,11 +100,11 @@ export default [
       "jsx-a11y/alt-text": "warn",
       "jsx-a11y/anchor-is-valid": "warn",
       "jsx-a11y/click-events-have-key-events": "warn",
-      "jsx-a11y/no-static-element-interactions": "warn",
+      "jsx-a11y/no-static-element-interactions": ["warn", { allowExpressionValues: true }],
 
       // No console in app code (warn — `lint (zero warnings)` doctrine still
       // catches it). Allowlisted in scripts/ and tests/ below.
-      "no-console": "warn",
+      "no-console": ["warn", { allow: ["error", "warn"] }],
 
       // Allow unused props prefixed with `_`.
       "no-unused-vars": [
@@ -109,6 +116,12 @@ export default [
         },
       ],
     },
+  },
+
+  // Use the TypeScript-aware rule for declarations and type-only parameters.
+  {
+    files: ["**/*.{ts,tsx}"],
+    rules: { "no-unused-vars": "off" },
   },
 
   // ── Bridge-pattern exception: window assignment in screens + components ────
@@ -145,7 +158,7 @@ export default [
       },
     },
     rules: {
-      "no-console": "warn",
+      "no-console": ["warn", { allow: ["error", "warn"] }],
       "@typescript-eslint/no-unused-vars": [
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
@@ -161,6 +174,7 @@ export default [
       globals: {
         process: "readonly",
         console: "readonly",
+        document: "readonly",
         Buffer: "readonly",
         __dirname: "readonly",
         __filename: "readonly",

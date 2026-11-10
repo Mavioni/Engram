@@ -4,6 +4,12 @@
 
 This repository contains the existing Engram mobile/web client and Cloudflare Worker backend, together with the evolving target platform architecture. The current application is a starting implementation, not the complete target platform.
 
+## Company and product boundary
+
+Revenant A.I. LLC is the parent company designated by the user to develop and steward Engram, with Wyoming stated as its formation jurisdiction. The exact filed entity record, current good standing, ownership records, and any Arizona foreign qualification or domestication must be verified against official records before company contracts or filings. This software repository does not establish legal status.
+
+Engram is the flagship platform. External AI providers are vendors or technology integrations—not the owner of Engram's identity, data, memory, policy, or control plane.
+
 ## Canonical product domains
 
 | Domain | Responsibility |
@@ -45,18 +51,20 @@ IRIS is a legacy implementation label. Its capability is now named **Engram Inte
 | Omarchy | Arch/Hyprland desktop environment | Optional Engram Workstation; not a cloud dependency |
 | Businesses-Manager / OSA | Existing workflows, orchestration, business logic, memory | Selective reuse after coupling, security, and license audit |
 | Project-Engram | Existing product UX, assessment, reflection, and interface concepts | Product reference; not the architecture to retrofit |
-| Sakana Fugu | Candidate multi-model reasoning coordinator | Experimental adapter pending API, cost, privacy, availability, and terms review |
+| Sakana AI Fugu | External multi-agent model/service | **Blocked for Engram development/integration pending written authorization and acceptable data terms** |
 | OpenRouter | Model/provider routing | Optional inference adapter with direct-provider fallback |
 | Meta TRIBE v2 | Neuroscience research model | Research only; not an agent framework; license suitability requires review |
 | BitNet | Low-bit inference optimization | Optional future optimization, not a core dependency |
 
-These are candidates, not completed integrations. See docs/architecture/INTEGRATIONS.md.
+See docs/architecture/INTEGRATIONS.md for candidate boundaries and admission gates.
 
 ## Current implementation
 
-The existing application uses React, Vite, Capacitor, Cloudflare Workers, Hono, D1, Better Auth dependencies, and Anthropic as its currently wired inference provider.
+The existing application uses React, Vite, Capacitor, Cloudflare Workers, Hono, D1, Better Auth, and Anthropic as its currently wired inference provider.
 
-The current Worker contains unfinished authentication and route wiring. The existing /api/iris endpoint and IRIS source files are legacy implementation names; they do not indicate that the target architecture is complete. See docs/architecture/CURRENT_STATE.md.
+Engram Identity now contains an initial Engram Intelligence principal contract and a tenant-scoped D1 repository. The protected conversation route resolves the principal using a personal-tenant ID derived from the authenticated Better Auth user, creates a conservative default principal on first use, checks its active status and capability ceiling, and uses its configured Anthropic model binding. Workspace tenancy, a complete authorization-grant service, and end-to-end D1 integration tests are still outstanding. The historical migration that created the former principal table is retained for migration history; a follow-on migration renames stored data to the canonical Engram Intelligence table. No remote migration or backend deployment is authorized by this change.
+
+The existing /api/iris endpoint and IRIS source files are legacy implementation names; they do not indicate that the target architecture is complete. See docs/architecture/CURRENT_STATE.md.
 
 ## Architecture documents
 
@@ -77,7 +85,7 @@ Never commit secrets. See .env.example and server/wrangler.toml.
 
 ## Scope and status
 
-These documents describe intended architecture and staged work. They do not imply that OpenClaw, OpenCoven, OMI, Omarchy, OSA, Fugu, or OpenRouter have been integrated, security-reviewed, or deployed. This documentation update does not change production dependencies, migrations, infrastructure, or runtime behavior.
+These documents describe intended architecture and staged work. They do not imply that OpenClaw, OpenCoven, OMI, Omarchy, OSA, OpenRouter, or other candidates have been integrated, security-reviewed, or deployed. Sakana AI Fugu is specifically not an admitted integration and must not be used for Engram development or user data until the contractual gate in docs/decisions/2026-11-10-sakana-fugu-admission-gate.md is resolved. The code changes in this branch do not deploy infrastructure or apply D1 migrations.
 
 ## License
 

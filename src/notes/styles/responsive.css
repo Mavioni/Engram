@@ -1,0 +1,393 @@
+@media (min-width: 1400px) {
+  .notebook-columns {
+    grid-template-columns: minmax(0, 1fr) 370px;
+  }
+  .writing-column {
+    max-width: 1100px;
+    width: 100%;
+    margin: auto;
+    height: 100%;
+  }
+  .observer-content {
+    padding: 40px;
+  }
+  .bottom-nav-item {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+}
+@media (max-width: 760px) {
+  .top-bar {
+    padding: 10px 16px;
+    min-height: 56px;
+  }
+  .top-actions {
+    gap: 5px;
+  }
+  .app-brand {
+    gap: 10px;
+  }
+  .connection-status {
+    display: none;
+  }
+  .app-brand h2 {
+    font-size: 19px;
+  }
+  .draft-meta {
+    padding: 13px 16px 6px;
+    gap: 10px;
+  }
+  .today-date {
+    font-size: 8px;
+  }
+  .composer-toolbar {
+    padding: 3px 16px 11px;
+    gap: 6px;
+  }
+  .mood-picker {
+    gap: 2px;
+  }
+  .mood-pick {
+    width: 38px;
+    height: 38px;
+  }
+  .layout-picker {
+    width: 100%;
+    gap: 5px;
+    justify-content: flex-start;
+  }
+  .layout-pill {
+    font-size: 9px;
+    min-height: 36px;
+    padding: 7px 11px;
+  }
+  .notebook-columns {
+    display: flex;
+  }
+  .writing-column {
+    width: 100%;
+  }
+  .observer-panel {
+    display: none;
+  }
+  .entry-title-input {
+    margin: 12px 16px 0;
+    font-size: 21px;
+    padding: 7px 0;
+  }
+  .main-editor {
+    padding: 12px 16px;
+  }
+  .capture-chat {
+    padding: 15px 16px;
+    gap: 12px;
+  }
+  .writing-prompt {
+    padding: 20px 0;
+  }
+  .writing-prompt h2 {
+    font-size: 39px;
+  }
+  .writing-prompt p {
+    font-size: 12px;
+  }
+  .writing-prompt .label {
+    font-size: 9px;
+  }
+  .capture-input {
+    margin: 0 16px 10px;
+  }
+  .tag-input-row {
+    padding: 8px 16px;
+  }
+  .save-row {
+    padding: 9px 16px 12px;
+    gap: 12px;
+  }
+  .save-status {
+    font-size: 9px;
+    max-width: 180px;
+  }
+  .mobile-iris-launch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 16px;
+    border-top: 1px solid var(--bd-1);
+    background: var(--bg-2);
+    font: 11px var(--font-mono);
+    color: var(--fg-1);
+    flex-shrink: 0;
+  }
+  .mobile-iris-launch .label {
+    font-size: 8px;
+    margin-left: auto;
+  }
+  .mobile-iris-launch > svg {
+    color: var(--accent);
+  }
+  .bottom-nav {
+    justify-content: space-around;
+    gap: 0;
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+  .bottom-nav-item {
+    padding: 8px 7px;
+    font-size: 9px;
+    min-width: 56px;
+  }
+  .scroll-view {
+    padding: 25px 16px 35px;
+  }
+  .section-heading {
+    margin-bottom: 23px;
+    gap: 12px;
+  }
+  .section-heading h1 {
+    font-size: 31px;
+  }
+  .section-heading > .label {
+    font-size: 8px;
+  }
+  .timeline-controls {
+    gap: 12px;
+  }
+  .search-field {
+    width: 100%;
+  }
+  .segmented {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .segmented button {
+    padding: 10px 11px;
+    font-size: 9px;
+    gap: 6px;
+  }
+  .timeline-filter {
+    gap: 2px;
+    margin: 10px 0 18px;
+  }
+  .mood-filter {
+    padding: 8px 6px;
+    font-size: 9px;
+  }
+  .filter-all {
+    padding: 8px 6px;
+    font-size: 9px;
+  }
+  .entry-card {
+    padding: 17px 14px;
+    gap: 12px;
+  }
+  .entry-date {
+    width: 46px;
+  }
+  .entry-date strong {
+    font-size: 30px;
+  }
+  .entry-date .label {
+    font-size: 8px;
+  }
+  .entry-card h2 {
+    font-size: 22px;
+  }
+  .entry-card > svg {
+    display: none;
+  }
+  .entry-card-meta {
+    gap: 5px;
+  }
+  .entry-card-meta .label {
+    font-size: 8px;
+  }
+  .entry-card-meta .label:last-child {
+    font-size: 8px;
+  }
+  .entries-river {
+    margin-left: 3px;
+    padding-left: 15px;
+  }
+  .entries-river .entry-card:before {
+    width: 5px;
+    height: 5px;
+    left: -23px;
+  }
+  .dossier-stamp {
+    display: none;
+  }
+  .mirror-hero {
+    grid-template-columns: 1fr;
+    padding: 25px 20px;
+    gap: 10px;
+  }
+  .mirror-visual {
+    padding: 10px;
+    gap: 17px;
+  }
+  .iris-orb.large {
+    width: 135px;
+    height: 135px;
+  }
+  .mirror-hero h2 {
+    font-size: 32px;
+  }
+  .mirror-hero p {
+    font-size: 12px;
+  }
+  .provenance {
+    font-size: 9px;
+  }
+  .stats-row > div {
+    padding: 17px 12px;
+  }
+  .stats-row .label {
+    font-size: 8px;
+    letter-spacing: 0.03em;
+  }
+  .stats-row strong {
+    font-size: 29px;
+  }
+  .mirror-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .panel {
+    padding: 19px;
+  }
+  .panel h2 {
+    font-size: 24px;
+  }
+  .setting-row {
+    gap: 15px;
+    align-items: flex-start;
+  }
+  .setting-row h3 {
+    font-size: 13px;
+  }
+  .setting-row p {
+    font-size: 11px;
+  }
+  .setting-row .secondary {
+    font-size: 11px;
+    padding: 9px;
+  }
+  .connection-badge {
+    font-size: 7px;
+  }
+  .source-list button {
+    gap: 10px;
+    font-size: 12px;
+  }
+  .source-list button .label {
+    font-size: 8px;
+    min-width: 78px;
+  }
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .modal-body {
+    max-height: 95dvh;
+    border-radius: 14px 14px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .modal-header {
+    padding: 12px 16px;
+  }
+  .modal-scroll {
+    padding: 22px 18px;
+  }
+  .modal-scroll h1 {
+    font-size: 30px;
+  }
+  .entry-full-body {
+    font-size: 18px;
+  }
+  .iris-dialog {
+    height: 90dvh;
+  }
+  .iris-messages {
+    padding: 20px 16px;
+  }
+  .iris-composer {
+    padding: 15px 16px;
+  }
+  .vault-gate {
+    padding: 22px;
+  }
+  .gate-content {
+    padding: 35px 0;
+  }
+  .gate-content h1 {
+    font-size: 39px;
+  }
+  .vault-gate > footer {
+    font-size: 8px;
+    gap: 12px;
+  }
+}
+@media (max-width: 360px) {
+  .app-brand .wordmark,
+  .brand-divider {
+    display: none;
+  }
+  .today-date {
+    display: none;
+  }
+  .mood-pick {
+    width: 35px;
+    height: 35px;
+  }
+  .layout-pill {
+    padding: 7px 9px;
+  }
+  .mood-filter span:last-child {
+    font-size: 8px;
+  }
+  .save-row {
+    gap: 8px;
+  }
+  .save-row .primary {
+    padding: 10px 12px;
+  }
+  .writing-prompt h2 {
+    font-size: 32px;
+  }
+}
+@media (max-height: 650px) {
+  .writing-prompt {
+    padding: 12px 0;
+  }
+  .writing-prompt h2 {
+    font-size: 27px;
+    margin: 10px 0;
+  }
+  .writing-prompt p {
+    display: none;
+  }
+  .entry-title-input {
+    margin-top: 5px;
+  }
+  .tag-input-row {
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+  .save-row {
+    padding-bottom: 8px;
+  }
+  .mobile-iris-launch {
+    padding-top: 7px;
+    padding-bottom: 7px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *:before,
+  *:after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

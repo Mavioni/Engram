@@ -1,11 +1,11 @@
 // Today / Dashboard — premium edition: editorial layout, depth, refinement
 
 function DashboardScreen({ onNavigate }) {
-  const useStore = window.useUserStore;
-  const displayName = (useStore && useStore((s) => s.displayName)) || null;
-  const assessmentComplete = (useStore && useStore((s) => s.assessmentComplete)) || false;
-  const last7DaysMoods = (useStore && useStore((s) => s.last7DaysMoods)) || [];
-  const hasInsights = (useStore && useStore((s) => s.hasInsights)) || false;
+  const useStore = window.useUserStore ?? ((selector) => selector({}));
+  const displayName = useStore((s) => s.displayName) || null;
+  const assessmentComplete = useStore((s) => s.assessmentComplete) || false;
+  const last7DaysMoods = useStore((s) => s.last7DaysMoods) || [];
+  const hasInsights = useStore((s) => s.hasInsights) || false;
 
   const now = new Date();
   const stamp = formatGreetingStamp(now);
@@ -113,7 +113,7 @@ function formatGreetingStamp(date) {
 
 function PlayerCardHero({ onClick, assessmentComplete }) {
   return (
-    <div onClick={onClick} className="scale-in" style={{
+    <div onClick={onClick} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onClick?.(); } }} className="scale-in" style={{
       position: "relative",
       borderRadius: "var(--r-2xl)",
       overflow: "hidden",
@@ -234,7 +234,7 @@ function SacredMark() {
 
 function PathCard({ n, icon, title, sub, time, tint, onClick }) {
   return (
-    <div onClick={onClick} style={{
+    <div onClick={onClick} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onClick?.(); } }} style={{
       background: "var(--bg-card)",
       borderRadius: "var(--r-lg)",
       padding: 24,
@@ -279,7 +279,7 @@ function MoodTrendCard({ onClick, points = [] }) {
     ? points.map((p, i) => `${i === 0 ? "M" : "L"} ${(i / (points.length - 1)) * w},${h - p * h}`).join(" ")
     : "";
   return (
-    <div onClick={onClick} style={{
+    <div onClick={onClick} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onClick?.(); } }} style={{
       background: "var(--bg-card)",
       borderRadius: "var(--r-lg)",
       padding: 28,
@@ -333,7 +333,7 @@ function MoodTrendCard({ onClick, points = [] }) {
 
 function IRISObservationCard({ onClick, hasInsights = false }) {
   return (
-    <div onClick={onClick} style={{
+    <div onClick={onClick} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onClick?.(); } }} style={{
       borderRadius: "var(--r-lg)",
       padding: 28,
       background: "linear-gradient(135deg, color-mix(in oklab, var(--accent) 14%, var(--bg-card)), var(--bg-card))",
@@ -402,7 +402,7 @@ function ReflectionsCompact({ onNavigate }) {
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
         {items.map((r, i) => (
-          <div key={i} onClick={() => onNavigate("journal")} style={{ display: "flex", gap: 14, cursor: "pointer", paddingBottom: i === 0 ? 16 : 0, borderBottom: i === 0 ? "1px solid var(--line)" : "none" }}>
+          <div key={i} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onNavigate("journal"); } }} onClick={() => onNavigate("journal")} style={{ display: "flex", gap: 14, cursor: "pointer", paddingBottom: i === 0 ? 16 : 0, borderBottom: i === 0 ? "1px solid var(--line)" : "none" }}>
             <MoodOrb {...r.mood} size={42} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>

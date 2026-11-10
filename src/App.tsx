@@ -1,346 +1,146 @@
-// Engram — root App.
-// Ports prototype.html's App() function to a real ESM module.
-//
-// TODO(indra-bridge): the legacy screen-*.jsx + components/*.jsx modules were
-// authored as Babel-in-browser scripts that read `React` as a global and
-// publish their components via `window.ChatScreen = ChatScreen`. To keep them
-// untouched (mythos-sasuke owns the eventual ESM rewrite), we install React on
-// `window` BEFORE side-effect-importing those files, then pull the components
-// back off `window`. mythos-indra is investigating a cleaner ESM bridge.
+import { useState } from "react";
+import { AuthProvider, useAuth } from "./auth/AuthProvider";
+import { API_URL, SOURCE_URL } from "./notes/api";
+import { NotesWorkspace } from "./notes/NotesWorkspace";
+import { VaultGate } from "./notes/VaultGate";
+import { Icon } from "./notes/Icon";
+import type { VaultSession } from "./notes/vault";
 
-import * as React from 'react'
-import { useEffect, useState, type ReactNode } from 'react'
-import ReactDOM from 'react-dom'
-
-// 1) Publish React/ReactDOM as globals so the legacy .jsx modules resolve them.
-//    This must happen at module top-level, BEFORE the side-effect imports below.
-type GlobalShim = {
-  React: typeof React
-  ReactDOM: typeof ReactDOM
-  ENGRAM_API_URL: string
-}
-const globalShim = window as unknown as Window & GlobalShim
-globalShim.React = React
-globalShim.ReactDOM = ReactDOM
-globalShim.ENGRAM_API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8787"
-
-// 2) Side-effect imports — each file mutates `window.<Name>` on load.
-//    Order matters: primitives + icons before screens that use them.
-// Dynamic imports are deliberate: the legacy JSX modules read React from
-// window at module evaluation time. Static imports would execute before the
-// global shim below is installed.
-await import('./components/icons.jsx')
-await import('./components/primitives.jsx')
-await import('./components/tweaks-panel.jsx')
-await import('./components/browser-window.jsx')
-await import('./screens/screen-onboarding.jsx')
-await import('./screens/screen-chat.jsx')
-await import('./screens/screen-dashboard.jsx')
-await import('./screens/screen-checkin.jsx')
-await import('./screens/screen-journal.jsx')
-await import('./screens/screen-meditation.jsx')
-await import('./screens/screen-insights.jsx')
-await import('./screens/screen-playercard.jsx')
-
-// 3) Auth provider — owned by mythos-naruto. Assume export shape:
-//    export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
-//    export function useAuth(): { status: 'loading' | 'signed-in' | 'signed-out' }
-import { AuthProvider, useAuth } from './auth/AuthProvider'
-import LoginScreen from './auth/LoginScreen'
-
-// ----- types pulled off the window shim -------------------------------------
-
-type ScreenId =
-  | 'onboarding'
-  | 'chat'
-  | 'dashboard'
-  | 'checkin'
-  | 'journal'
-  | 'meditation'
-  | 'insights'
-  | 'playercard'
-
-type ScreenProps = { onNavigate: (id: ScreenId) => void }
-type OnboardingProps = { onComplete: () => void }
-type IconCmp = (props: { size?: number; color?: string }) => JSX.Element
-
-interface LegacyGlobals {
-  ChatScreen: React.ComponentType<ScreenProps>
-  DashboardScreen: React.ComponentType<ScreenProps>
-  CheckinScreen: React.ComponentType<ScreenProps>
-  JournalScreen: React.ComponentType<ScreenProps>
-  MeditationScreen: React.ComponentType<ScreenProps>
-  InsightsScreen: React.ComponentType<ScreenProps>
-  PlayerCardScreen: React.ComponentType<ScreenProps>
-  OnboardingScreen: React.ComponentType<OnboardingProps>
-  NavBar: React.ComponentType<{
-    active: ScreenId
-    onChange: (id: ScreenId) => void
-    items: Array<{ id: ScreenId; label: string; icon: IconCmp }>
-  }>
-  TweaksPanel: React.ComponentType<{ title?: string; children?: ReactNode }>
-  TweakSection: React.ComponentType<{ title?: string; children?: ReactNode }>
-  TweakRadio: React.ComponentType<{
-    label: string
-    value: string
-    onChange: (v: string) => void
-    options: Array<{ value: string; label: string }>
-  }>
-  TweakSelect: React.ComponentType<{
-    label: string
-    value: string
-    onChange: (v: string) => void
-    options: Array<{ value: string; label: string }>
-  }>
-  TweakButton: React.ComponentType<{
-    label: string
-    onClick: () => void
-    children?: ReactNode
-  }>
-  IconHome: IconCmp
-  IconChat: IconCmp
-  IconBook: IconCmp
-  IconMoon: IconCmp
-  IconChart: IconCmp
-  IconCard: IconCmp
-  useTweaks: <T extends Record<string, string>>(
-    defaults: T,
-  ) => [T, (key: keyof T, value: string) => void]
-}
-
-const W = window as unknown as Window & LegacyGlobals
-
-// ----- tweak defaults (mirrors prototype.html) ------------------------------
-
-const TWEAK_DEFAULTS = {
-  theme: 'dark',
-  accent: 'ocean',
-  density: 'normal',
-  font: 'serif-display',
-  moodViz: 'orb',
-  playerCardLayout: 'hero',
-} as const
-
-type Tweaks = { [K in keyof typeof TWEAK_DEFAULTS]: string }
-
-// Local fallback if the legacy useTweaks isn't on window for some reason.
-function useTweaksFallback(defaults: Tweaks): [Tweaks, (k: keyof Tweaks, v: string) => void] {
-  const [tweaks, setTweaks] = useState<Tweaks>(defaults)
-  const setTweak = (key: keyof Tweaks, value: string) =>
-    setTweaks((prev) => ({ ...prev, [key]: value }))
-  return [tweaks, setTweak]
-}
-
-// ----- shell ---------------------------------------------------------------
-
-function Shell() {
-  const useTweaks = W.useTweaks ?? useTweaksFallback
-  const [tweaks, setTweak] = useTweaks<Tweaks>({ ...TWEAK_DEFAULTS })
-  const [screen, setScreen] = useState<ScreenId>('chat')
-
-  useEffect(() => {
-    const root = document.documentElement
-    root.dataset.theme = tweaks.theme
-    root.dataset.accent = tweaks.accent
-    root.dataset.density = tweaks.density
-    root.dataset.font = tweaks.font
-  }, [tweaks])
-
-  const navItems: Array<{ id: ScreenId; label: string; icon: IconCmp }> = [
-    { id: 'dashboard', label: 'Today', icon: W.IconHome },
-    { id: 'chat', label: 'IRIS', icon: W.IconChat },
-    { id: 'journal', label: 'Journal', icon: W.IconBook },
-    { id: 'meditation', label: 'Practice', icon: W.IconMoon },
-    { id: 'insights', label: 'Insights', icon: W.IconChart },
-    { id: 'playercard', label: 'Engram', icon: W.IconCard },
-  ]
-
-  const renderScreen = () => {
-    switch (screen) {
-      case 'onboarding':
-        return <W.OnboardingScreen onComplete={() => setScreen('chat')} />
-      case 'chat':
-        return <W.ChatScreen onNavigate={setScreen} />
-      case 'dashboard':
-        return <W.DashboardScreen onNavigate={setScreen} />
-      case 'checkin':
-        return <W.CheckinScreen onNavigate={setScreen} />
-      case 'journal':
-        return <W.JournalScreen onNavigate={setScreen} />
-      case 'meditation':
-        return <W.MeditationScreen onNavigate={setScreen} />
-      case 'insights':
-        return <W.InsightsScreen onNavigate={setScreen} />
-      case 'playercard':
-        return <W.PlayerCardScreen onNavigate={setScreen} />
-      default:
-        return <W.ChatScreen onNavigate={setScreen} />
-    }
-  }
-
-  const hideNav = screen === 'onboarding' || screen === 'checkin' || screen === 'meditation'
-
-  return (
-    <div
-      style={{
-        position: 'relative',
-        height: '100vh',
-        width: '100%',
-        overflow: 'hidden',
-        background: 'var(--bg)',
-      }}
-      data-screen-label={screen}
-    >
-      {renderScreen()}
-      {!hideNav && W.NavBar ? (
-        <W.NavBar active={screen} onChange={setScreen} items={navItems} />
-      ) : null}
-
-      {W.TweaksPanel ? (
-        <W.TweaksPanel title="Tweaks">
-          <W.TweakSection title="Appearance">
-            <W.TweakRadio
-              label="Theme"
-              value={tweaks.theme}
-              onChange={(v) => setTweak('theme', v)}
-              options={[
-                { value: 'light', label: 'Light' },
-                { value: 'dark', label: 'Dark' },
-              ]}
-            />
-            <W.TweakRadio
-              label="Accent"
-              value={tweaks.accent}
-              onChange={(v) => setTweak('accent', v)}
-              options={[
-                { value: 'sage', label: 'Sage' },
-                { value: 'lavender', label: 'Lavender' },
-                { value: 'peach', label: 'Peach' },
-                { value: 'amber', label: 'Amber' },
-                { value: 'ocean', label: 'Ocean' },
-              ]}
-            />
-            <W.TweakRadio
-              label="Density"
-              value={tweaks.density}
-              onChange={(v) => setTweak('density', v)}
-              options={[
-                { value: 'compact', label: 'Compact' },
-                { value: 'normal', label: 'Normal' },
-                { value: 'comfy', label: 'Comfy' },
-              ]}
-            />
-            <W.TweakSelect
-              label="Typography"
-              value={tweaks.font}
-              onChange={(v) => setTweak('font', v)}
-              options={[
-                { value: 'serif-display', label: 'Fraunces + Inter (default)' },
-                { value: 'all-sans', label: 'Inter only' },
-                { value: 'mono-touch', label: 'Inter + IBM Plex' },
-              ]}
-            />
-          </W.TweakSection>
-
-          <W.TweakSection title="Navigation">
-            <W.TweakButton label="Onboarding" onClick={() => setScreen('onboarding')}>
-              View →
-            </W.TweakButton>
-            <W.TweakButton label="Mood check-in flow" onClick={() => setScreen('checkin')}>
-              Open →
-            </W.TweakButton>
-          </W.TweakSection>
-        </W.TweaksPanel>
-      ) : null}
-    </div>
-  )
-}
-
-// ----- splash --------------------------------------------------------------
-
-function Splash() {
-  return (
-    <div
-      role="status"
-      aria-busy="true"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        display: 'grid',
-        placeItems: 'center',
-        background: 'var(--bg, #0a0a0a)',
-        color: 'var(--ink, #f5f5f5)',
-        fontFamily: 'var(--font-display, serif)',
-        letterSpacing: '0.08em',
-      }}
-    >
-      <div style={{ opacity: 0.7, fontSize: 14, textTransform: 'uppercase' }}>Engram</div>
-    </div>
-  )
-}
-
-// ----- auth gate -----------------------------------------------------------
-
-function AuthGate() {
-  const { status } = useAuth()
-
-  if (status === 'loading') return <Splash />
-  if (status === 'signed-out') return <LoginScreen />
-  return <Shell />
-}
-
-// ----- root ----------------------------------------------------------------
-
-function LegalNotice() {
-  return (
-    <details
-      style={{
-        position: 'fixed',
-        left: 8,
-        bottom: 8,
-        zIndex: 1000,
-        maxWidth: 'min(340px, calc(100vw - 16px))',
-        color: 'var(--ink-3, #777)',
-        fontSize: 11,
-      }}
-    >
-      <summary
-        style={{
-          cursor: 'pointer',
-          listStyle: 'none',
-          border: '1px solid var(--line, #777)',
-          borderRadius: 999,
-          padding: '6px 10px',
-          background: 'var(--bg-card, #171717)',
+function CloudGate({ onDevice }: { onDevice: () => void }) {
+  const { status, user, signIn, signUp, signOut } = useAuth();
+  const [register, setRegister] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  if (status === "loading")
+    return (
+      <main className="vault-gate">
+        <p role="status">Opening Engram…</p>
+      </main>
+    );
+  if (status === "signed-in" && user)
+    return (
+      <NotesWorkspace
+        key={user.id}
+        onLock={async () => {
+          await signOut();
         }}
-      >
-        Legal · Source
-      </summary>
-      <div
-        style={{
-          marginTop: 6,
-          padding: 12,
-          border: '1px solid var(--line, #777)',
-          borderRadius: 10,
-          background: 'var(--bg-card, #171717)',
-          lineHeight: 1.6,
-        }}
-      >
-        <div>© 2026 Massimo Panella (Mavioni).</div>
-        <div>No warranty. You may convey this work under AGPL-3.0-only.</div>
-        <a href="https://github.com/Mavioni/Engram" target="_blank" rel="noreferrer">View corresponding source</a>
-        {' · '}
-        <a href="https://github.com/Mavioni/Engram/blob/master/LICENSE" target="_blank" rel="noreferrer">View license</a>
+      />
+    );
+  return (
+    <main className="vault-gate">
+      <div className="gate-brand">
+        <span className="brand-dot" /> ENGRAM <span className="label">PRIVATE ALPHA</span>
       </div>
-    </details>
-  )
+      <div className="gate-content">
+        <div className="gate-icon">
+          <Icon name="eye" size={26} />
+        </div>
+        <span className="label accent">ENGRAM CLOUD</span>
+        <h1>{register ? "Begin with yourself." : "Welcome back."}</h1>
+        <p>Your notebook, memory, and reflection. Sign in to your Engram account.</p>
+        <form
+          onSubmit={async (event) => {
+            event.preventDefault();
+            setBusy(true);
+            setError("");
+            try {
+              const result = register
+                ? await signUp.email({ email, password, name })
+                : await signIn.email({ email, password });
+              if (result.error) setError(result.error.message ?? "Sign-in could not be completed.");
+              else setPassword("");
+            } catch (reason) {
+              setError(reason instanceof Error ? reason.message : "Engram could not be reached.");
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          {register && (
+            <label>
+              Display name
+              <input
+                autoComplete="name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                required
+              />
+            </label>
+          )}
+          <label>
+            Email
+            <input
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+            />
+          </label>
+          <label>
+            Password
+            <input
+              type="password"
+              autoComplete={register ? "new-password" : "current-password"}
+              minLength={register ? 12 : undefined}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+            />
+          </label>
+          {register && (
+            <p className="fine-print">
+              Use at least 12 characters. Saved entries are stored in your Engram account. AI
+              processing requires an explicit request.
+            </p>
+          )}
+          {error && (
+            <p className="error-message" role="alert">
+              {error}
+            </p>
+          )}
+          <button className="primary" disabled={busy}>
+            {busy ? "Connecting…" : register ? "Create account" : "Sign in"}
+            <Icon name="arrow" size={16} />
+          </button>
+        </form>
+        <button
+          className="text-button"
+          onClick={() => {
+            setRegister(!register);
+            setError("");
+          }}
+        >
+          {register ? "Already have an account? Sign in" : "Create an Engram account"}
+        </button>
+        <button className="text-button" onClick={onDevice}>
+          Use a separate encrypted device notebook
+        </button>
+        <p className="fine-print">
+          ChatGPT account connection is pending. This is your Engram login.
+        </p>
+      </div>
+      <footer>
+        <a href={SOURCE_URL}>Source · AGPL-3.0-only</a>
+      </footer>
+    </main>
+  );
 }
 
 export default function App() {
+  const [device, setDevice] = useState(!API_URL);
+  const [vault, setVault] = useState<VaultSession>();
+  if (vault) return <NotesWorkspace vault={vault} onLock={async () => setVault(undefined)} />;
+  if (device)
+    return (
+      <VaultGate onUnlocked={setVault} onCloud={API_URL ? () => setDevice(false) : undefined} />
+    );
   return (
     <AuthProvider>
-      <AuthGate />
-      <LegalNotice />
+      <CloudGate onDevice={() => setDevice(true)} />
     </AuthProvider>
-  )
+  );
 }
