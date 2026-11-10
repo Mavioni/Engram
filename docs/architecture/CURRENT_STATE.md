@@ -30,7 +30,7 @@
 
 ## Remaining gaps and risks
 
-- The mobile/web client has not yet been updated to expose the per-request memory opt-in control.
+- The chat client now calls `/api/intelligence`, sends the expected transcript payload, retains the server-issued conversation session ID, and exposes a default-off explicit memory opt-in.
 - Authentication establishes identity, not organization/project authorization or shared-workspace tenancy.
 - Email verification and password-reset delivery are not configured; verification mail remains disabled.
 - Production trusted origins and CORS require deployment-specific verification.
@@ -38,7 +38,8 @@
 - Rate-limit enforcement remains a stub.
 - Legacy profile mirroring can fail if an existing profile row has a conflicting email under a different ID; migration reconciliation is still needed.
 - Memory retention, export, correction history, and account-erasure workflows remain incomplete.
-- No server typecheck, D1 migration, integration test, or deployment smoke test has been run for this implementation slice.
+- A Playwright client contract test now mocks the Intelligence endpoint and checks transcript shape, session continuity, and explicit memory opt-in. It has not yet been executed.
+- No server typecheck, D1 migration, live D1 integration test, or deployment smoke test has been run for this implementation slice.
 
 ## Migration constraints
 
@@ -50,9 +51,9 @@
 
 ## Next engineering priorities
 
-1. Run server typecheck and authenticated API integration tests against local D1.
+1. Run server typecheck, Playwright client tests, and authenticated API integration tests against local D1.
 2. Provision real email delivery before enabling email verification or password reset.
-3. Update clients to expose the explicit memory opt-in and return/use the server-issued session ID.
+3. Add server-side tests for user isolation, session ownership, and memory retrieval opt-in.
 4. Add memory export, retention, correction history, and account deletion workflows.
 5. Complete rate limits and abuse controls.
 6. Decouple inference behind an Engram Reasoning provider interface.
