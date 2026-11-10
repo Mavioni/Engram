@@ -24,12 +24,8 @@ export function createAuth(env: Env) {
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
 
-    database: {
-      type: "sqlite",
-      // Better Auth's D1 adapter accepts the live D1 binding.
-      // @ts-expect-error D1 adapter typing is narrower than the Workers binding.
-      db: env.DB,
-    },
+    // Better Auth 1.6.9 includes native Cloudflare D1 support.
+    database: env.DB,
 
     emailAndPassword: {
       enabled: true,
