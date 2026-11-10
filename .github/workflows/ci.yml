@@ -21,8 +21,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
-      - name: Test D1 migration chain
-        run: python3 scripts/test_d1_migrations.py
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
@@ -40,3 +38,5 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npm run typecheck
+      - name: Test D1 migration chain
+        run: python3 scripts/test_d1_migrations.py
