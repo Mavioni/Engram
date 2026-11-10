@@ -22,6 +22,7 @@ export default [
   {
     ignores: [
       "dist/**",
+      "preview/alpha/**",
       "ios/**",
       "android/**",
       ".wrangler/**",
