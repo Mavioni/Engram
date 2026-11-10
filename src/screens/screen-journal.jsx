@@ -1,6 +1,6 @@
 // Journal — premium editorial writing surface
 
-const { useState: useStateJ, useEffect: useEffectJ } = React;
+const { useState: useStateJ } = React;
 
 const JOURNAL_PROMPTS = [
   "What stood out today, and why?",

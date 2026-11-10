@@ -1,9 +1,9 @@
 // Player Card — premium edition: editorial layout, hand-set type, depth, ritual
 
 function PlayerCardScreen({ onNavigate }) {
-  const useStore = window.useUserStore;
-  const assessmentComplete = (useStore && useStore((s) => s.assessmentComplete)) || false;
-  const archetype = (useStore && useStore((s) => s.archetype)) || null;
+  const useStore = window.useUserStore ?? ((selector) => selector({}));
+  const assessmentComplete = useStore((s) => s.assessmentComplete) || false;
+  const archetype = useStore((s) => s.archetype) || null;
 
   const sealStamp = formatPlayerCardStamp(new Date());
 

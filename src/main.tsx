@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
-import './styles/styles.css'
+import './notes/notes.css'
 
 const rootEl = document.getElementById('root')
 if (!rootEl) {

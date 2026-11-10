@@ -58,7 +58,6 @@ async function persist(state: PersistedShape): Promise<void> {
   } catch (error: unknown) {
     // Preferences write failed; surface in dev but don't crash the UI.
     if (typeof window !== 'undefined' && (window as { __DEV__?: boolean }).__DEV__) {
-      // eslint-disable-next-line no-console
       console.warn('user-store persist failed', error)
     }
   }

@@ -5,7 +5,7 @@ export default defineConfig({
   timeout: 15_000,
   retries: process.env.CI ? 1 : 0,
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://127.0.0.1:5173',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     trace: 'retain-on-failure',
@@ -13,13 +13,13 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], launchOptions: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {} },
     },
   ],
   webServer: {
     command: 'npm run dev',
-    env: { ...process.env, VITE_API_URL: 'http://localhost:5173' },
-    url: 'http://localhost:5173',
+    env: { ...process.env, VITE_API_URL: 'http://127.0.0.1:5173' },
+    url: 'http://127.0.0.1:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,
   },

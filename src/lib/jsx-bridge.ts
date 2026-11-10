@@ -88,7 +88,6 @@ if (import.meta.env.DEV) {
   // Use a microtask so the registration above has settled.
   queueMicrotask(() => {
     if (!w.React || !w.useState) {
-      // eslint-disable-next-line no-console
       console.error(
         '[jsx-bridge] React global not installed before prototype evaluation. ' +
           'Confirm `import "./lib/jsx-bridge"` is the first import in main.tsx.'

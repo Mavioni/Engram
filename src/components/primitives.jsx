@@ -4,6 +4,9 @@ const Card = ({ children, className = "", style = {}, padded = true, soft = fals
   <div
     className={`eng-card ${onClick ? "hoverable" : ""} ${className}`}
     onClick={onClick}
+    role={onClick ? "button" : undefined}
+    tabIndex={onClick ? 0 : undefined}
+    onKeyDown={onClick ? (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onClick(event); } } : undefined}
     style={{
       background: soft ? "var(--bg-soft)" : "var(--bg-card)",
       borderRadius: "var(--r-lg)",
@@ -193,7 +196,6 @@ const MoodOrb = ({ valence = 0.5, energy = 0.5, size = 64, label, animated }) =>
   // valence 0..1, energy 0..1
   // Color: low=plum, mid=accent-soft, high=warm
   const hue = valence < 0.33 ? "var(--plum)" : valence < 0.66 ? "var(--accent-soft)" : "var(--warm)";
-  const radius = size / 2;
   const wobble = 4 + energy * 8;
   return (
     <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
@@ -214,7 +216,7 @@ const MoodOrb = ({ valence = 0.5, energy = 0.5, size = 64, label, animated }) =>
 };
 
 // Avatar — IRIS represented as a sage geometric mark
-const IrisAvatar = ({ size = 32, animated }) => (
+const IrisAvatar = ({ size = 32 }) => (
   <div style={{
     width: size,
     height: size,

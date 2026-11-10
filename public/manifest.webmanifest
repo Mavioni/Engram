@@ -1,0 +1,11 @@
+{
+  "name": "Engram — Your private notebook",
+  "short_name": "Engram",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0c0c0c",
+  "theme_color": "#0c0c0c",
+  "icons": [{ "src": "./engram-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

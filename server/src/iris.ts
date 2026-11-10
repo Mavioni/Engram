@@ -375,7 +375,7 @@ export async function handleIris(
     // Run streaming in background; return the readable immediately.
     (async () => {
       let assistantContent = "";
-      let usage: TokenUsage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0 };
+      const usage: TokenUsage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0 };
 
       try {
         for await (const event of reasoning.stream(reasoningRequest)) {

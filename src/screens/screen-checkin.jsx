@@ -242,7 +242,7 @@ function FactorsPremium({ factors, setFactors }) {
   );
 }
 
-function NotePremium({ note, setNote, mood }) {
+function NotePremium({ note, setNote }) {
   const prompts = [
     "What am I really saying when I say I feel this way…",
     "If I were honest with one person right now, I'd tell them…",
