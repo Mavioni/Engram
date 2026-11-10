@@ -30,10 +30,12 @@
 
 ## Remaining gaps and risks
 
-- The chat client now calls `/api/intelligence`, sends the expected transcript payload, retains the server-issued conversation session ID, and exposes a default-off explicit memory opt-in.
+- The chat client now calls the configured cloud API origin, sends the expected transcript payload, retains the server-issued conversation session ID, and exposes a default-off explicit memory opt-in.
+- Credentialed API CORS and Better Auth trusted origins accept local development origins plus an explicit comma-separated `APP_ORIGINS` deployment variable.
+- Wrangler no longer ships `BETTER_AUTH_URL=http://localhost:8787` as a default deployment variable; local development supplies it through the dev script, while production must configure its real URL and app origins.
 - Authentication establishes identity, not organization/project authorization or shared-workspace tenancy.
 - Email verification and password-reset delivery are not configured; verification mail remains disabled.
-- Production trusted origins and CORS require deployment-specific verification.
+- Production `BETTER_AUTH_URL` and `APP_ORIGINS` must be configured before deployment; production CORS, cookie behavior, and trusted-origin settings still require smoke tests.
 - Intelligence remains directly coupled to Anthropic; Engram Reasoning provider abstraction is not implemented.
 - Rate-limit enforcement remains a stub.
 - Legacy profile mirroring can fail if an existing profile row has a conflicting email under a different ID; migration reconciliation is still needed.
