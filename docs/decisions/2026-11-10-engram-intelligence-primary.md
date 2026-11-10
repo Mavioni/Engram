@@ -4,7 +4,7 @@
 - **Status:** Accepted architectural direction; implementation in progress
 - **Decision owner:** Engram platform
 - **Company direction:** Revenant A.I. LLC is the company designated by the user to develop and steward Engram. Current legal standing and state qualification are outside this software decision and must be verified separately.
-- **Related:** [Platform architecture](../architecture/ENGRAM_PLATFORM.md), [Relational Substrate](../architecture/RELATIONAL_SUBSTRATE.md), [Integration boundaries](../architecture/INTEGRATIONS.md)
+- **Related:** [Platform architecture](../architecture/ENGRAM_PLATFORM.md), [Relational Substrate](../architecture/RELATIONAL_SUBSTRATE.md), [Integration boundaries](../architecture/INTEGRATIONS.md), [Sakana Fugu admission gate](2026-11-10-sakana-fugu-admission-gate.md)
 
 ## Context
 
@@ -29,20 +29,15 @@ Engram owns the durable principal, session continuity, canonical memory, provena
 
 ## External provider boundary: Sakana AI Fugu
 
-Sakana AI is an external AI company. Fugu is its external multi-agent model/service, accessible through the Sakana API. Fugu may be evaluated as an optional Engram Reasoning provider adapter.
+Sakana AI and Fugu are external company/product names. They are not the name, identity, or control plane of Engram Intelligence.
 
-Fugu is not:
-- the identity or name of Engram Intelligence;
-- Engram's canonical memory or knowledge store;
-- Engram's authorization service or task ledger;
-- the owner of Engram user relationships, permissions, or audit records;
-- a required dependency for the platform to operate.
+The public Sakana AI API Terms reviewed on 2026-11-10 prohibit use of the API service to develop or provide competing AI services and prohibit submitting personal information. Its privacy policy also describes possible use of service interaction data for model training/fine-tuning and does not specify a fixed universal retention period. These terms create a material conflict with Engram's intended product and data model.
 
-Any Fugu adapter must be replaceable and must send only the minimum context approved by Engram policy. Before non-public or sensitive data is transmitted, complete data-processing, retention, security, pricing, quota, and contractual review. A provider response is untrusted output and cannot authorize an action.
+Therefore, Fugu is **not admitted as an Engram provider** at this time. Do not implement, invoke, or use Fugu for Engram product development, and do not send Engram user, project, or memory data, unless Revenant A.I. LLC obtains written permission or an enterprise agreement that expressly resolves the intended product use and required data protections. See the separate admission-gate ADR.
 
 ## Provider boundary
 
-Anthropic is the currently implemented provider adapter. OpenAI and Sakana AI Fugu are candidates, not implemented integrations in this decision. A production adapter must use the provider's supported API, server-side credentials, explicit timeout and token limits, bounded retries, usage accounting, and a direct-provider fallback where configured.
+Anthropic is the currently implemented provider adapter. OpenAI is a candidate, not an implemented integration in this decision. A production adapter must use the provider's supported API, server-side credentials, explicit timeout and token limits, bounded retries, usage accounting, and a direct-provider fallback where configured.
 
 Do not equate a model name, model version, API key, provider conversation ID, or provider account with the canonical identity of Engram Intelligence. Provider changes must not erase or redefine Engram's identity or memory.
 
@@ -90,7 +85,7 @@ A capability ceiling is not itself an authority grant. Current authorization mus
 1. Correct the prior principal name and preserve migration history with an additive migration.
 2. Integrate the principal into authenticated server context using a trusted tenant-resolution rule.
 3. Add tests for principal persistence, tenant isolation, malformed stored configuration, and capability-ceiling validation.
-4. Implement provider adapters one at a time, beginning only after data, cost, and policy review.
+4. Implement provider adapters only after data, cost, contract, and policy admission.
 5. Integrate session continuity and consent-aware memory retrieval/persistence.
 6. Route tool requests through durable tasks, policy checks, approvals, and audited runtime adapters.
 7. Expose Engram Intelligence state through E8 Presence using derived, authorized ERS views.
