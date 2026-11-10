@@ -3,7 +3,7 @@
 - **Date:** 2026-11-10
 - **Status:** Accepted architectural direction; implementation in progress
 - **Decision owner:** Engram platform
-- **Company direction:** Revenant A.I. LLC is the company designated by the user to develop and steward Engram. Current legal standing and state qualification are outside this software decision and must be verified separately.
+- **Company direction:** Revenant A.I. LLC is the parent company designated by the user to develop and steward Engram, with Wyoming stated as its formation jurisdiction. The exact filed record, good standing, authority to contract, and any Arizona qualification/domestication must be independently verified.
 - **Related:** [Platform architecture](../architecture/ENGRAM_PLATFORM.md), [Relational Substrate](../architecture/RELATIONAL_SUBSTRATE.md), [Integration boundaries](../architecture/INTEGRATIONS.md), [Sakana Fugu admission gate](2026-11-10-sakana-fugu-admission-gate.md)
 
 ## Context
