@@ -23,6 +23,8 @@ import { createAnthropicReasoningProvider } from "./reasoning/anthropic";
 const MODEL = "claude-sonnet-4-6" as const;
 const MAX_TOKENS = 800;
 const MAX_CONTENT_CHARS = 4000;
+const MAX_MESSAGES = 40;
+const MAX_TOTAL_CONTENT_CHARS = 32000;
 const FALLBACK_MESSAGE =
   "I'm having a moment of stillness. Let's continue shortly.";
 
@@ -73,7 +75,10 @@ function validateMessages(raw: unknown): IrisMessage[] {
   if (!Array.isArray(raw) || raw.length === 0) {
     throw new Error("messages must be a non-empty array");
   }
-  return raw.map((m, i) => {
+  if (raw.length > MAX_MESSAGES) {
+    throw new Error(`messages cannot contain more than ${MAX_MESSAGES} entries`);
+  }
+  const messages = raw.map((m, i) => {
     if (!m || typeof m !== "object") throw new Error(`messages[${i}] invalid`);
     const { role, content } = m as Record<string, unknown>;
     if (!isValidRole(role)) throw new Error(`messages[${i}].role invalid`);
@@ -82,6 +87,11 @@ function validateMessages(raw: unknown): IrisMessage[] {
     }
     return { role, content: scrubContent(content) };
   });
+  const totalChars = messages.reduce((total, message) => total + message.content.length, 0);
+  if (totalChars > MAX_TOTAL_CONTENT_CHARS) {
+    throw new Error(`combined message content cannot exceed ${MAX_TOTAL_CONTENT_CHARS} characters`);
+  }
+  return messages;
 }
 
 /** Persist a single message row to D1. Fire-and-forget — never throws. */
@@ -250,6 +260,13 @@ export async function handleIris(
     body = await c.req.json<IrisRequestBody>();
   } catch {
     return c.json({ error: "invalid JSON body" }, 400);
+  }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return c.json({ error: "request body must be an object" }, 422);
+  }
+  if (body.sessionId !== undefined &&
+      (typeof body.sessionId !== "string" || body.sessionId.length === 0 || body.sessionId.length > 128)) {
+    return c.json({ error: "sessionId is invalid" }, 422);
   }
 
   let messages: IrisMessage[];
