@@ -53,8 +53,8 @@ The initial ERS slice is contracts and interfaces only. It does not yet provide 
 - Authentication establishes identity, not organization/project authorization or shared-workspace tenancy.
 - The Engram Intelligence principal repository is not yet wired into authenticated request handling or the Intelligence route.
 - Email verification and password-reset delivery are not configured; verification mail remains disabled.
-- Engram Reasoning currently has only the Anthropic adapter. OpenAI and Sakana AI Fugu adapters, provider routing, fallback behavior, and cost controls are not yet implemented.
-- Sakana AI Fugu is an evaluated integration candidate, not an installed dependency or active provider.
+- Engram Reasoning currently has only the Anthropic adapter. OpenAI routing and provider fallback are not yet implemented.
+- Sakana AI Fugu is not admitted as a provider. Its published API terms create a potential conflict with Engram product development and prohibit inputting personal data. Do not implement or call it until written authorization or revised enterprise terms have been obtained and reviewed.
 - Rate-limit enforcement remains a stub.
 - Legacy profile mirroring can fail if an existing profile row has a conflicting email under a different ID; migration reconciliation is still needed.
 - Memory retention, export, correction history, and account-erasure workflows remain incomplete.
