@@ -1,27 +1,32 @@
 # Engram — Cloudflare Worker deploy
 #
-# Operator must add these GitHub repo secrets before first run:
-# CLOUDFLARE_API_TOKEN (workers:edit + d1:edit scope), CLOUDFLARE_ACCOUNT_ID,
-# ANTHROPIC_API_KEY, BETTER_AUTH_SECRET. Use `wrangler secret put` once
-# locally to seed the Worker, then this workflow keeps deploys in sync.
-# App-Store/Play-Store mobile-build workflows are separate (P1, next dispatch).
+# This workflow is deliberately manual. It never applies D1 migrations.
+# Remote migrations require a separate review and explicit operator action.
+# Configure the GitHub "production" environment with required reviewers.
+#
+# Required repository secrets for a manual Worker deploy:
+# CLOUDFLARE_API_TOKEN (Workers edit only; D1 edit is not needed here)
+# CLOUDFLARE_ACCOUNT_ID, ANTHROPIC_API_KEY, BETTER_AUTH_SECRET.
+# No Sakana or OpenAI secret is required until a provider adapter is implemented.
 
 name: Deploy Worker
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'server/**'
-      - '.github/workflows/deploy-worker.yml'
   workflow_dispatch:
+    inputs:
+      confirm_production_deploy:
+        description: "Confirm that this dispatch is an authorized production deployment."
+        required: true
+        type: boolean
+        default: false
 
 concurrency:
-  group: deploy-worker-${{ github.ref }}
+  group: deploy-worker-production
   cancel-in-progress: false
 
 jobs:
   deploy:
+    if: inputs.confirm_production_deploy == true
     name: Deploy to Cloudflare
     runs-on: ubuntu-24.04
     environment: production
@@ -41,7 +46,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: server/package-lock.json
 
@@ -50,29 +55,14 @@ jobs:
           if [ -f package-lock.json ]; then
             npm ci
           else
-            echo "::warning::server/package-lock.json missing — falling back to npm install. Commit a lockfile to enable reproducible builds."
-            npm install --no-audit --no-fund
+            echo "::error::server/package-lock.json is required for reproducible production deployment."
+            exit 1
           fi
 
-      - name: Detect D1 migrations
-        id: migrations
-        run: |
-          if [ -d migrations ] && [ -n "$(ls -A migrations 2>/dev/null)" ]; then
-            echo "present=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "present=false" >> "$GITHUB_OUTPUT"
-          fi
+      - name: Typecheck Worker
+        run: npm run typecheck
 
-      - name: Apply D1 migrations
-        if: steps.migrations.outputs.present == 'true'
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: server
-          command: d1 migrations apply engram --remote --persist-to ./.wrangler/state
-
-      - name: Deploy Worker
+      - name: Deploy Worker (no database migrations)
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
