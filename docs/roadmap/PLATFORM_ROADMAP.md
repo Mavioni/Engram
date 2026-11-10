@@ -13,9 +13,10 @@
 ## Phase 1 — Platform contracts and threat model
 - [ ] Define Engram user, agent, service, and device identity.
 - [ ] Define tenant and project isolation.
-- [ ] Define Engram Relational Substrate (ERS) contracts: entities, typed relationships, events, contexts, assertions, evidence, and authority.
-- [ ] Define predicate/type registries, provenance taxonomy, temporal semantics, and schema versioning.
-- [ ] Define tenant-aware repository interfaces and authorization boundaries.
+- [x] Define initial ERS TypeScript contracts for entities, relationships, events, contexts, assertions, evidence, and authority.
+- [x] Add initial namespaced predicate/type, event, provenance, and authority-action registries.
+- [x] Define tenant-scoped repository interfaces and separate authorization service contract.
+- [ ] Define predicate inverse/cardinality rules, provenance policy, temporal semantics, and schema versioning.
 - [ ] Define memory schema, provenance, consent, retention, correction, export, and deletion.
 - [ ] Define task lifecycle, events, idempotency, retries, cancellation, and approvals.
 - [ ] Define inference provider adapter and structured output contract.
