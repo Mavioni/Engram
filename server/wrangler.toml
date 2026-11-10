@@ -16,10 +16,19 @@ database_id = "ba2037a1-717c-4708-ae7c-f4f321db513a"
 migrations_dir = "src/db/migrations"
 
 [vars]
-# Non-secret env vars only. Secrets go through `wrangler secret put`.
-ENVIRONMENT = "development"
-BETTER_AUTH_URL = "http://localhost:8787"
-
+# Set non-secret deployment-specific values in the Cloudflare dashboard or
+# with wrangler --var. Do not ship localhost origins in production.
+#
+# Local development:
+#   npm run dev
+#   (the package script supplies localhost BETTER_AUTH_URL / ENVIRONMENT)
+#
+# Production deployment requires:
+#   BETTER_AUTH_URL=https://<your-api-domain>
+#   APP_ORIGINS=https://<your-client-domain>,capacitor://localhost
+# Configure both as Worker vars before deploying. Missing auth configuration
+# fails closed with HTTP 503.
+#
 # --- Required secrets (set via CLI, never in this file) ---
 # wrangler secret put ANTHROPIC_API_KEY
 # wrangler secret put BETTER_AUTH_SECRET
