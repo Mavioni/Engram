@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Icon } from './Icon'
 import { parseEntry, type Entry } from './model'
+import { SOURCE_URL } from './api'
 
 export function Settings({ entries, cloud, theme, setTheme, lock, importEntries, saving }: { entries: Entry[]; cloud: boolean; theme: string; setTheme: (theme: string) => void; lock: () => Promise<void>; importEntries: (entries: Entry[]) => Promise<number>; saving: boolean }) {
   const [notice, setNotice] = useState('')
@@ -33,6 +34,6 @@ export function Settings({ entries, cloud, theme, setTheme, lock, importEntries,
     }} />
     {notice && <p role="status" className="notice">{notice}</p>}</article>
     <article className="panel privacy-panel"><Icon name="eye" size={22} /><div><h3>Your mirror reflects. You decide.</h3><p>Self Mirror uses only your saved entries and selected moods. It does not impersonate you, diagnose you, or act on your behalf. No notes are sent to an AI provider without an explicit chat request or enabled memory sharing.</p></div></article>
-    <footer className="source-footer">Engram · Private alpha · © 2026 Massimo Panella<br /><a href="https://github.com/Mavioni/Engram">Corresponding source</a> · <a href="https://github.com/Mavioni/Engram/blob/master/LICENSE">AGPL-3.0-only</a> · No warranty</footer>
+    <footer className="source-footer">Engram · Private alpha · © 2026 Massimo Panella<br /><a href={SOURCE_URL}>Corresponding source</a> · <a href="https://github.com/Mavioni/Engram/blob/master/LICENSE">AGPL-3.0-only</a> · No warranty</footer>
   </section>
 }

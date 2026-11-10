@@ -1,6 +1,7 @@
 import { parseEntry, type Entry, type ChatMessage } from './model'
 
 export const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/u, '') ?? ''
+export const SOURCE_URL = `https://github.com/Mavioni/Engram/tree/${import.meta.env.VITE_SOURCE_REF || 'feat/notes-interface-alpha'}`
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!API_URL) throw new Error('Connect an Engram server to use cloud features.')
   const response = await fetch(`${API_URL}${path}`, { ...init, credentials: 'include', headers: { 'Content-Type': 'application/json', ...init?.headers } })

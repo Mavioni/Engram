@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { AuthProvider, useAuth } from './auth/AuthProvider'
-import { API_URL } from './notes/api'
+import { API_URL, SOURCE_URL } from './notes/api'
 import { NotesWorkspace } from './notes/NotesWorkspace'
 import { VaultGate } from './notes/VaultGate'
 import { Icon } from './notes/Icon'
@@ -24,7 +24,7 @@ function CloudGate({ onDevice }: { onDevice: () => void }) {
       else setPassword('')
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'Engram could not be reached.') }
     finally { setBusy(false) }
-  }}>{register && <label>Display name<input autoComplete="name" value={name} onChange={event => setName(event.target.value)} required /></label>}<label>Email<input type="email" autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} required /></label><label>Password<input type="password" autoComplete={register ? 'new-password' : 'current-password'} minLength={register ? 12 : undefined} value={password} onChange={event => setPassword(event.target.value)} required /></label>{register && <p className="fine-print">Use at least 12 characters. Saved entries are stored in your Engram account. AI processing requires an explicit request.</p>}{error && <p className="error-message" role="alert">{error}</p>}<button className="primary" disabled={busy}>{busy ? 'Connecting…' : register ? 'Create account' : 'Sign in'}<Icon name="arrow" size={16} /></button></form><button className="text-button" onClick={() => { setRegister(!register); setError('') }}>{register ? 'Already have an account? Sign in' : 'Create an Engram account'}</button><button className="text-button" onClick={onDevice}>Use a separate encrypted device notebook</button><p className="fine-print">ChatGPT account connection is pending. This is your Engram login.</p></div><footer><a href="https://github.com/Mavioni/Engram">Source · AGPL-3.0-only</a></footer></main>
+  }}>{register && <label>Display name<input autoComplete="name" value={name} onChange={event => setName(event.target.value)} required /></label>}<label>Email<input type="email" autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} required /></label><label>Password<input type="password" autoComplete={register ? 'new-password' : 'current-password'} minLength={register ? 12 : undefined} value={password} onChange={event => setPassword(event.target.value)} required /></label>{register && <p className="fine-print">Use at least 12 characters. Saved entries are stored in your Engram account. AI processing requires an explicit request.</p>}{error && <p className="error-message" role="alert">{error}</p>}<button className="primary" disabled={busy}>{busy ? 'Connecting…' : register ? 'Create account' : 'Sign in'}<Icon name="arrow" size={16} /></button></form><button className="text-button" onClick={() => { setRegister(!register); setError('') }}>{register ? 'Already have an account? Sign in' : 'Create an Engram account'}</button><button className="text-button" onClick={onDevice}>Use a separate encrypted device notebook</button><p className="fine-print">ChatGPT account connection is pending. This is your Engram login.</p></div><footer><a href={SOURCE_URL}>Source · AGPL-3.0-only</a></footer></main>
 }
 
 export default function App() {

@@ -35,6 +35,11 @@ export default [
   // ── @eslint/js recommended (all targeted files) ────────────────────────────
   js.configs.recommended,
 
+  {
+    files: ["public/sw.js"],
+    languageOptions: { globals: { self: "readonly", caches: "readonly", fetch: "readonly", URL: "readonly", Response: "readonly" } },
+  },
+
   // ── TypeScript (typescript-eslint recommended set) ─────────────────────────
   ...tseslint.configs.recommended.map((cfg) => ({
     ...cfg,

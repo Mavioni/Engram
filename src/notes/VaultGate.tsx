@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Icon } from './Icon'
+import { SOURCE_URL } from './api'
 import { unlockVault, vaultExists, type VaultSession } from './vault'
 
 export function VaultGate({ onUnlocked, onCloud }: { onUnlocked: (session: VaultSession) => void; onCloud?: () => void }) {
@@ -33,6 +34,6 @@ export function VaultGate({ onUnlocked, onCloud }: { onUnlocked: (session: Vault
       <p className="fine-print">Encrypted on this device. Keep your passphrase safe: it cannot be recovered. Export a backup from Settings. AI and cloud sync require a connected Engram server.</p>
       {onCloud && <button className="text-button" onClick={onCloud}>Sign in to Engram Cloud</button>}
     </div>
-    <footer>Your note-taking interface, evolved. <a href="https://github.com/Mavioni/Engram">Source · AGPL-3.0</a></footer>
+    <footer>Your note-taking interface, evolved. <a href={SOURCE_URL}>Source · AGPL-3.0</a></footer>
   </main>
 }

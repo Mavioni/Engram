@@ -13,3 +13,11 @@ ReactDOM.createRoot(rootEl).render(
     <App />
   </StrictMode>,
 )
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator && window.isSecureContext) {
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {
+      // The notebook remains usable online; offline installation can be retried.
+    })
+  })
+}

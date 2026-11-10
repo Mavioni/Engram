@@ -15,7 +15,6 @@ const config: CapacitorConfig = {
   appId: 'app.engram.companion',
   appName: 'Engram',
   webDir: 'dist',
-  bundledWebRuntime: false,
 
   server: {
     // Dev-time hostname; prod builds use bundled assets.
