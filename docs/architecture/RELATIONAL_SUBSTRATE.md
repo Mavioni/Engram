@@ -1,6 +1,6 @@
 # Engram Relational Substrate (ERS)
 
-**Status:** Accepted architectural direction; schema and runtime implementation pending.  
+**Status:** Accepted architectural direction; initial append-only D1 event-log slice implemented; broader persistence and authorization remain pending.  
 **Scope:** Canonical model for identity, memory, knowledge, reasoning artifacts, agents, tasks, events, contexts, authority, and integrations.  
 **Deployment posture:** Cloud-first. D1 is the current persistence foundation; storage may evolve behind Engram-owned repositories.
 
@@ -145,7 +145,7 @@ Proposed logical persistence groups:
 
 These are a target vocabulary, **not an instruction to create every table immediately**. Before migrations, design constraints, indexes, tenant model, deletion semantics, and data backfill. Existing Better Auth `user`, `users`, `ai_sessions`, `messages`, and `memories` tables must be reconciled through additive migrations and compatibility adapters. No destructive rename or implicit ownership change.
 
-Repositories should expose typed operations (for example `createEntity`, `assertRelationship`, `appendEvent`, `recordEvidence`, `checkAuthority`) and enforce tenant filters centrally. Domain services remain responsible for business validation.
+Repositories should expose typed operations (for example `createEntity`, `assertRelationship`, `appendEvent`, `recordEvidence`, `checkAuthority`) and enforce tenant filters centrally. Domain services remain responsible for business validation.\n\n**Implemented first slice:** `server/src/db/migrations/0003_ers_events.sql` defines the event table and tenant/time indexes. `server/src/ers/d1-events.ts` provides append and paginated list operations. The adapter currently accepts only authenticated personal-user scopes using `personal:<user-id>` tenant IDs; it rejects workspace scopes and delegated-agent actors until membership and authority resolution exist. Event types are registry-checked, timestamps must be canonical UTC ISO strings, payloads are limited to 16 KiB, and the adapter exposes no update/delete operation. The migration has not been applied to any remote D1 database.
 
 ## 8. E8 mathematical representation
 
@@ -193,7 +193,7 @@ Never rely on client-supplied tenant IDs, entity IDs, or E8 coordinates as proof
 
 1. Define shared TypeScript contracts and predicate/type registries without changing current persistence.
 2. Add ERS repository interfaces and tenant-aware authorization boundary.
-3. Add append-only event and assertion/evidence vertical slice.
+3. Extend the initial append-only event slice with automated D1 repository tests, then add assertion/evidence persistence.
 4. Adapt existing memory records as ERS entities/assertions while preserving current API behavior.
 5. Add relationship query endpoints and tests for cross-tenant isolation.
 6. Add task/agent event integration only after authority and approval semantics are tested.
