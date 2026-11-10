@@ -26,18 +26,21 @@ globalShim.ENGRAM_API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:87
 
 // 2) Side-effect imports — each file mutates `window.<Name>` on load.
 //    Order matters: primitives + icons before screens that use them.
-import './components/icons.jsx'
-import './components/primitives.jsx'
-import './components/tweaks-panel.jsx'
-import './components/browser-window.jsx'
-import './screens/screen-onboarding.jsx'
-import './screens/screen-chat.jsx'
-import './screens/screen-dashboard.jsx'
-import './screens/screen-checkin.jsx'
-import './screens/screen-journal.jsx'
-import './screens/screen-meditation.jsx'
-import './screens/screen-insights.jsx'
-import './screens/screen-playercard.jsx'
+// Dynamic imports are deliberate: the legacy JSX modules read React from
+// window at module evaluation time. Static imports would execute before the
+// global shim below is installed.
+await import('./components/icons.jsx')
+await import('./components/primitives.jsx')
+await import('./components/tweaks-panel.jsx')
+await import('./components/browser-window.jsx')
+await import('./screens/screen-onboarding.jsx')
+await import('./screens/screen-chat.jsx')
+await import('./screens/screen-dashboard.jsx')
+await import('./screens/screen-checkin.jsx')
+await import('./screens/screen-journal.jsx')
+await import('./screens/screen-meditation.jsx')
+await import('./screens/screen-insights.jsx')
+await import('./screens/screen-playercard.jsx')
 
 // 3) Auth provider — owned by mythos-naruto. Assume export shape:
 //    export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
