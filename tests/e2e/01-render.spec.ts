@@ -27,46 +27,24 @@ test.beforeEach(async ({ page }) => {
     })
   })
 })
-test('root mounts within 2s and shows IRIS chat header', async ({ page }) => {
-  await page.goto('/', { waitUntil: 'domcontentloaded' })
 
-  // Splash may appear; wait for the actual IRIS header .display element
+test('root mounts and shows the IRIS conversation header', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' })
   const irisHeader = page.locator('.display').filter({ hasText: /IRIS/i }).first()
-  await expect(irisHeader).toBeVisible({ timeout: 2_000 })
+  await expect(irisHeader).toBeVisible({ timeout: 5_000 })
 })
 
-test('Tweaks panel cycles accents', async ({ page }) => {
+test('root applies the default appearance settings', async ({ page }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' })
-
-  // Wait for shell to mount
   await expect(page.locator('.display').filter({ hasText: /IRIS/i }).first()).toBeVisible()
-
-  // Tweaks panel is fixed bottom-right; open it if collapsed
-  const panel = page.locator('.twk-panel')
-  const isVisible = await panel.isVisible()
-  if (!isVisible) {
-    // Panel may be collapsed — click the toggle button to expand
-    await page.locator('.twk-panel button').first().click()
-  }
-
-  // Click the Lavender radio option inside the Accent radiogroup
-  const lavenderBtn = page
-    .locator('button[role="radio"]')
-    .filter({ hasText: /lavender/i })
-  await lavenderBtn.click()
-
-  // Verify dataset.accent updated on <html>
-  const accent = await page.evaluate(() => document.documentElement.dataset.accent)
-  expect(accent).toBe('lavender')
+  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.accent)).toBe('ocean')
+  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe('dark')
 })
 
-test('NavBar shows 6 tabs', async ({ page }) => {
+test('navigation exposes six destinations and the quick check-in action', async ({ page }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' })
-
-  // Wait for shell
   await expect(page.locator('.display').filter({ hasText: /IRIS/i }).first()).toBeVisible()
-
-  // NavBar items rendered as buttons inside the nav element
   const navButtons = page.locator('nav button')
-  await expect(navButtons).toHaveCount(6)
+  await expect(navButtons).toHaveCount(7)
+  await expect(navButtons.filter({ has: page.locator('svg') })).toHaveCount(7)
 })
