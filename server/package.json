@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --var BETTER_AUTH_URL:http://localhost:8787 --var ENVIRONMENT:development",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit"
   },
