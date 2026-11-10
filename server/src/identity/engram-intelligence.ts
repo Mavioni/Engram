@@ -27,7 +27,6 @@ export type EngramIntelligenceCapability =
 export type ReasoningProvider =
   | "openai"
   | "anthropic"
-  | "sakana-fugu"
   | "openrouter"
   | "other";
 
@@ -101,7 +100,6 @@ export interface EngramIntelligenceInferenceResult {
 const REASONING_PROVIDERS = new Set<ReasoningProvider>([
   "openai",
   "anthropic",
-  "sakana-fugu",
   "openrouter",
   "other",
 ]);
