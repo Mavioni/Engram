@@ -129,11 +129,6 @@ function newId(): string {
 }
 
 /**
- * Ensure the authenticated user has a legacy profile row and a conversation
- * session owned by that user. A client-provided session ID is never trusted
- * without an ownership check; an unknown or foreign ID is replaced.
- */
-/**
  * Load a bounded set of user-owned memories only when the request explicitly
  * opts in. Memory content is framed as untrusted reference data, not policy
  * or instructions. Expired and soft-deleted records are excluded.
@@ -166,6 +161,11 @@ async function loadMemoryContext(db: D1Database, userId: string): Promise<string
   ].join("\n");
 }
 
+/**
+ * Ensure the authenticated user has a legacy profile row and a conversation
+ * session owned by that user. A client-provided session ID is never trusted
+ * without an ownership check; an unknown or foreign ID is replaced.
+ */
 async function ensureOwnedSession(
   db: D1Database,
   user: { id: string; email: string },
