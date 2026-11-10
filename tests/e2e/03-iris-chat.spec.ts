@@ -3,6 +3,32 @@ import { test, expect } from '@playwright/test';
 test('chat sends the conversation, preserves session ID, and explicitly opts into memory', async ({ page }) => {
   const requests: Array<Record<string, unknown>> = [];
 
+  await page.route('**/api/auth/get-session', async (route) => {
+    const now = Date.now();
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        session: {
+          id: 'session-auth-test',
+          token: 'test-session-token',
+          userId: 'user-test-001',
+          expiresAt: new Date(now + 60 * 60 * 1000).toISOString(),
+          createdAt: new Date(now).toISOString(),
+          updatedAt: new Date(now).toISOString(),
+        },
+        user: {
+          id: 'user-test-001',
+          name: 'Engram Test',
+          email: 'engram-test@example.com',
+          emailVerified: true,
+          createdAt: new Date(now).toISOString(),
+          updatedAt: new Date(now).toISOString(),
+        },
+      }),
+    });
+  });
+
   await page.route('**/api/intelligence', async (route) => {
     const body = route.request().postDataJSON() as Record<string, unknown>;
     requests.push(body);
