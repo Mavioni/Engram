@@ -6,6 +6,12 @@ import type {
   ReasoningStreamEvent,
 } from "./types";
 
+function cacheReadInputTokens(usage: unknown): number {
+  if (!usage || typeof usage !== "object") return 0;
+  const value = (usage as { cache_read_input_tokens?: unknown }).cache_read_input_tokens;
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
 /**
  * Anthropic implementation of the Engram Reasoning contract.
  * Vendor-specific request and streaming event details stay inside this file.
@@ -52,7 +58,7 @@ export class AnthropicReasoningProvider implements ReasoningProvider {
         inputTokens: response.usage.input_tokens,
         outputTokens: response.usage.output_tokens,
         cacheReadTokens:
-          (response.usage as Record<string, number>).cache_read_input_tokens ?? 0,
+          cacheReadInputTokens(response.usage),
       },
     };
   }
@@ -82,8 +88,7 @@ export class AnthropicReasoningProvider implements ReasoningProvider {
           usage: {
             inputTokens: event.message.usage.input_tokens ?? 0,
             cacheReadTokens:
-              (event.message.usage as Record<string, number>)
-                .cache_read_input_tokens ?? 0,
+              cacheReadInputTokens(event.message.usage),
           },
         };
       }
