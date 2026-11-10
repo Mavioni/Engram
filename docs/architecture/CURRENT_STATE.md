@@ -2,34 +2,40 @@
 
 **Repository:** Mavioni/Engram  
 **Branch reviewed:** master  
-**Review basis:** repository source, configuration, and D1 schema.
+**Review basis:** repository source, package lock, Worker configuration, and D1 schema.
 
 ## Existing foundation
 
-- Client: React, Vite, TypeScript/JavaScript, Capacitor.
+- Client: React, Vite, TypeScript, Capacitor.
 - API: Cloudflare Workers with Hono.
 - Persistence: Cloudflare D1.
-- Authentication: Better Auth with D1 configuration.
-- Inference: Anthropic SDK; current route implementation references Claude Sonnet.
-- Product concepts: conversation, identity/authentication, reflection-oriented UX, assessment/profile data, and mobile shell.
+- Authentication: Better Auth 1.6.9, using its native D1 binding support.
+- Inference: Anthropic SDK; current intelligence handler still references Claude Sonnet.
 
-## Implemented in the initial platform slice
+## Implemented platform slices
 
 - Better Auth protocol endpoints are mounted at /api/auth/*.
-- Protected API routes resolve the Better Auth session from request headers and fail closed with 401 when no authenticated session exists.
-- The authenticated principal is attached to request context for downstream handlers.
-- /api/intelligence is introduced as the canonical route while /api/iris remains as a compatibility route.
-- Authentication now returns 503 when required server bindings are absent instead of silently accepting requests.
-- Verification and password-reset email delivery are not yet configured. Verification email is disabled rather than logging one-time URLs or tokens. Email verification must be enabled only after a real delivery provider is integrated.
+- Protected API routes resolve the Better Auth session and fail closed with 401 when no authenticated session exists.
+- Missing authentication configuration returns 503.
+- /api/intelligence is the canonical route; /api/iris remains a compatibility route.
+- Persistent memory is keyed directly to the canonical Better Auth user.id.
+- Authenticated /api/memory endpoints support list, create, update, and soft-delete.
+- All memory reads and mutations are scoped by the authenticated user ID; owner IDs are never accepted from request bodies.
+- Memory records include type, source, provenance, optional confidence, expiry, and timestamps.
+- Model-inferred memories are not silently persisted. Accepted provenance values are user_stated, user_imported, and user_approved.
+- D1 migration directory is explicitly configured as src/db/migrations.
 
 ## Remaining gaps and risks
 
-- Authentication establishes identity, not full application authorization. Tenant, project, and resource-level authorization still need explicit policy and data-access enforcement.
-- The D1 schema has user, account, session, AI session, messages, check-ins, and entitlements, but it is not yet the full canonical memory/provenance/task/audit model.
-- The current IRIS handler still couples inference directly to Anthropic.
-- Rate-limit enforcement in the IRIS handler remains a stub.
-- The IRIS handler's message persistence path must be reconciled with ai_sessions ownership and foreign-key constraints before it is treated as durable conversation storage.
-- Cross-origin client configuration and production trusted origins require deployment-specific verification.
+- Memory API is not yet integrated into conversational retrieval or the client UI.
+- Authentication establishes identity, not organization/project authorization or shared-workspace tenancy.
+- Email verification and password-reset delivery are not configured; verification mail remains disabled.
+- Production trusted origins and CORS require deployment-specific verification.
+- Intelligence remains directly coupled to Anthropic; Engram Reasoning provider abstraction is not implemented.
+- Rate-limit enforcement remains a stub.
+- Existing conversation persistence needs reconciliation with ai_sessions ownership and foreign-key constraints.
+- Memory retention, export, correction history, and account-erasure workflows remain incomplete.
+- No server typecheck, D1 migration, integration test, or deployment smoke test has been run for this implementation slice.
 
 ## Migration constraints
 
@@ -41,11 +47,10 @@
 
 ## Next engineering priorities
 
-1. Run server typecheck and auth route smoke tests against local D1.
+1. Run server typecheck and authenticated API integration tests against local D1.
 2. Provision real email delivery before enabling email verification or password reset.
-3. Add explicit authorization and tenant-scoped data access.
-4. Add integration tests proving unauthenticated requests cannot reach protected handlers.
+3. Integrate memory retrieval with Engram Intelligence under explicit user consent.
+4. Add memory export, retention, correction history, and account deletion workflows.
 5. Complete rate limits and abuse controls.
-6. Define canonical identity, memory, task, and audit contracts.
-7. Decouple inference behind an Engram Reasoning provider interface.
-8. Add runtime adapter contracts before adopting an external execution engine.
+6. Decouple inference behind an Engram Reasoning provider interface.
+7. Define durable task, audit, and runtime adapter contracts.
