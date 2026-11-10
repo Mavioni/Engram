@@ -121,6 +121,23 @@ CREATE TABLE IF NOT EXISTS entitlements (
 );
 
 -- ---------------------------------------------------------------------------
+-- Engram Memory: canonical ownership maps to Better Auth user.id
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS memories (
+  id             TEXT PRIMARY KEY,
+  owner_user_id  TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+  memory_type    TEXT NOT NULL DEFAULT 'note',
+  content        TEXT NOT NULL,
+  source         TEXT NOT NULL DEFAULT 'api',
+  provenance     TEXT NOT NULL CHECK(provenance IN ('user_stated', 'user_imported', 'user_approved')),
+  confidence     REAL CHECK(confidence IS NULL OR (confidence >= 0 AND confidence <= 1)),
+  created_at     INTEGER NOT NULL,
+  updated_at     INTEGER NOT NULL,
+  expires_at     INTEGER,
+  deleted_at     INTEGER
+);
+
+-- ---------------------------------------------------------------------------
 -- Indexes
 -- ---------------------------------------------------------------------------
 
@@ -130,3 +147,5 @@ CREATE INDEX IF NOT EXISTS idx_checkins_user_id      ON checkins(user_id);
 CREATE INDEX IF NOT EXISTS idx_account_user_id       ON account(userId);
 CREATE INDEX IF NOT EXISTS idx_session_user_id       ON session(userId);
 CREATE INDEX IF NOT EXISTS idx_session_token         ON session(token);
+CREATE INDEX IF NOT EXISTS idx_memories_owner_updated ON memories(owner_user_id, updated_at DESC) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_memories_owner_type ON memories(owner_user_id, memory_type) WHERE deleted_at IS NULL;
