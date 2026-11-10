@@ -11,10 +11,10 @@
  *  6. Graceful error handling (Anthropic 429 / 5xx)
  */
 
-import Anthropic from "@anthropic-ai/sdk";
 import type { Context } from "hono";
 import type { Env } from "./index";
 import { IRIS_SYSTEM_PROMPT } from "./iris-prompt";
+import { createAnthropicReasoningProvider } from "./reasoning/anthropic";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -210,6 +210,18 @@ async function checkRateLimit(
   return { allowed: true, remaining: 30 };
 }
 
+function getProviderErrorStatus(error: unknown): number {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "status" in error &&
+    typeof (error as { status?: unknown }).status === "number"
+  ) {
+    return (error as { status: number }).status;
+  }
+  return 500;
+}
+
 // ---------------------------------------------------------------------------
 // Main handler
 // ---------------------------------------------------------------------------
@@ -287,7 +299,14 @@ export async function handleIris(
   }
 
   // ----- Anthropic client -----
-  const anthropic = new Anthropic({ apiKey: c.env.ANTHROPIC_API_KEY });
+  const reasoning = createAnthropicReasoningProvider(c.env.ANTHROPIC_API_KEY);
+  const reasoningRequest = {
+    model: MODEL,
+    maxTokens: MAX_TOKENS,
+    systemPrompt: IRIS_SYSTEM_PROMPT,
+    context: memoryContext || undefined,
+    messages,
+  };
 
   // ----- Check if client accepts SSE -----
   const acceptsSSE =
@@ -311,52 +330,24 @@ export async function handleIris(
       let usage: TokenUsage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0 };
 
       try {
-        const stream = await anthropic.messages.stream({
-          model: MODEL,
-          max_tokens: MAX_TOKENS,
-          // Prompt-cache the system block: cache_control ephemeral pins this
-          // block in the 5-minute prompt-cache window, collapsing ~90% of
-          // system-prompt token cost on subsequent turns (ARCHITECTURE.md §4).
-          system,
-          messages: messages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-        });
-
-        // Stream content deltas to client
-        for await (const chunk of stream) {
-          if (
-            chunk.type === "content_block_delta" &&
-            chunk.delta.type === "text_delta"
-          ) {
-            assistantContent += chunk.delta.text;
-            await writeSSE("delta", JSON.stringify({ text: chunk.delta.text }));
-          }
-
-          // Capture usage from the final message event
-          if (chunk.type === "message_delta" && chunk.usage) {
-            usage.outputTokens = chunk.usage.output_tokens ?? 0;
-          }
-          if (chunk.type === "message_start" && chunk.message.usage) {
-            usage.inputTokens = chunk.message.usage.input_tokens ?? 0;
-            // cache_read_input_tokens is a prompt-caching extension field
-            usage.cacheReadTokens =
-              (chunk.message.usage as Record<string, number>)
-                .cache_read_input_tokens ?? 0;
+        for await (const event of reasoning.stream(reasoningRequest)) {
+          if (event.type === "text_delta") {
+            assistantContent += event.text;
+            await writeSSE("delta", JSON.stringify({ text: event.text }));
+          } else if (event.type === "usage") {
+            usage.inputTokens = event.usage.inputTokens ?? usage.inputTokens;
+            usage.outputTokens = event.usage.outputTokens ?? usage.outputTokens;
+            usage.cacheReadTokens = event.usage.cacheReadTokens ?? usage.cacheReadTokens;
+          } else if (event.type === "completed") {
+            await writeSSE(
+              "done",
+              JSON.stringify({ stopReason: event.stopReason, sessionId })
+            );
           }
         }
 
-        // Signal completion with stop reason
-        const finalMsg = await stream.finalMessage();
-        await writeSSE(
-          "done",
-          JSON.stringify({ stopReason: finalMsg.stop_reason, sessionId })
-        );
       } catch (err: unknown) {
-        const isAnthropicError =
-          err instanceof Anthropic.APIError;
-        const status = isAnthropicError ? err.status : 500;
+        const status = getProviderErrorStatus(err);
 
         if (status === 429 || (status >= 500 && status < 600)) {
           await writeSSE(
@@ -402,25 +393,9 @@ export async function handleIris(
   // NON-STREAMING fallback
   // ---------------------------------------------------------------------------
   try {
-    const response = await anthropic.messages.create({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      system,
-      messages: messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
-    });
-
-    const content =
-      response.content[0]?.type === "text" ? response.content[0].text : "";
-
-    const usage: TokenUsage = {
-      inputTokens: response.usage.input_tokens,
-      outputTokens: response.usage.output_tokens,
-      cacheReadTokens:
-        (response.usage as Record<string, number>).cache_read_input_tokens ?? 0,
-    };
+    const response = await reasoning.complete(reasoningRequest);
+    const content = response.content;
+    const usage: TokenUsage = response.usage;
 
     // Persist
     await persistMessage(c.env.DB, {
@@ -434,13 +409,12 @@ export async function handleIris(
     });
 
     return c.json(
-      { content, stopReason: response.stop_reason, sessionId },
+      { content, stopReason: response.stopReason, sessionId },
       200,
       { "X-RateLimit-Remaining": String(remaining - 1) }
     );
   } catch (err: unknown) {
-    const isAnthropicError = err instanceof Anthropic.APIError;
-    const status = isAnthropicError ? err.status : 500;
+    const status = getProviderErrorStatus(err);
     console.error("[iris] Anthropic non-stream error", err);
 
     if (status === 429 || (status >= 500 && status < 600)) {
