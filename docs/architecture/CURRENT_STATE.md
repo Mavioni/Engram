@@ -2,7 +2,8 @@
 
 **Repository:** Mavioni/Engram  
 **Branch reviewed:** master  
-**Review basis:** repository source, package lock, Worker configuration, and D1 schema.
+**Review basis:** repository source, package lock, Worker configuration, and D1 schema.  
+**Note:** This assessment describes the reviewed baseline before the Engram Intelligence principal correction on branch `fix/engram-intelligence-identity`.
 
 ## Existing foundation
 
@@ -32,9 +33,17 @@
 - ERS includes initial namespaced registries for entity types, predicates, event types, provenance kinds, and authority actions, plus confidence validation.
 - ERS defines tenant-scoped repository interfaces for entities, assertions, relationships, evidence, events, contexts, authority grants, and a separate authorization service contract.
 
+## Engram Intelligence principal correction
+
+The prior branch contained a mistakenly named principal contract, repository, and unapplied migration for a component called "Sakanafugu". That name is not an Engram product or architecture element. The correction branch replaces the TypeScript contract and repository with Engram Intelligence terminology.
+
+The existing migration 0004 is retained as historical migration input. New migration 0005 creates the canonical `engram_intelligence_principals` table, copies any existing rows into it, and removes the legacy table. This preserves an applied migration history if migration 0004 has already run. Migration 0005 is additive and has not been applied remotely by this change.
+
+The new principal contract/repository is still an isolated identity slice. It is not yet called from the authenticated request lifecycle, does not yet establish a production tenant model, and must not be presented as a complete authorization service.
+
 ## ERS implementation boundary
 
-The initial ERS slice is contracts and interfaces only. It does not yet provide D1 repositories, new API endpoints, authorization enforcement, database migrations, event persistence, or an E8 projection implementation. The current personal-user ownership model is not yet a complete personal/workspace tenant model. The interfaces must be implemented and tested before they are treated as security controls.
+The initial ERS slice is contracts and interfaces only. It does not yet provide complete D1 repositories for all ERS primitives, generic API endpoints, authorization enforcement, or an E8 projection implementation. The current personal-user ownership model is not yet a complete personal/workspace tenant model. Interfaces must be implemented and tested before they are treated as security controls.
 
 ## Remaining gaps and risks
 
@@ -42,18 +51,20 @@ The initial ERS slice is contracts and interfaces only. It does not yet provide 
 - Credentialed API CORS and Better Auth trusted origins accept local development origins plus an explicit comma-separated APP_ORIGINS deployment variable.
 - Production BETTER_AUTH_URL and APP_ORIGINS must be configured before deployment; production CORS, cookie behavior, and trusted-origin settings still require smoke tests.
 - Authentication establishes identity, not organization/project authorization or shared-workspace tenancy.
+- The Engram Intelligence principal repository is not yet wired into authenticated request handling or the Intelligence route.
 - Email verification and password-reset delivery are not configured; verification mail remains disabled.
-- Engram Reasoning currently has only the Anthropic adapter; additional providers, routing policy, fallback behavior, and cost controls are not implemented.
+- Engram Reasoning currently has only the Anthropic adapter. OpenAI and Sakana AI Fugu adapters, provider routing, fallback behavior, and cost controls are not yet implemented.
+- Sakana AI Fugu is an evaluated integration candidate, not an installed dependency or active provider.
 - Rate-limit enforcement remains a stub.
 - Legacy profile mirroring can fail if an existing profile row has a conflicting email under a different ID; migration reconciliation is still needed.
 - Memory retention, export, correction history, and account-erasure workflows remain incomplete.
 - A Playwright client contract test mocks the Better Auth session and Intelligence endpoint, then checks transcript shape, session continuity, and explicit memory opt-in.
-- GitHub Actions CI runs client typecheck/build/browser tests and a separate Cloudflare Worker typecheck; latest workflow status must be checked independently.
-- No server typecheck, D1 migration, live D1 integration test, or deployment smoke test has been performed for the ERS contract slice.
+- GitHub Actions CI runs client typecheck/build/browser tests and a separate Cloudflare Worker typecheck; current branch CI must be checked independently.
+- No remote D1 migration, backend deployment, or production smoke test is performed by the correction branch.
 
 ## Migration constraints
 
-1. Do not blindly rename source symbols, database tables, or routes. Use compatibility adapters and staged migrations.
+1. Preserve applied migration files; use additive follow-up migrations to change schemas.
 2. Preserve existing reflection and assessment capabilities as Engram features.
 3. Do not declare authorization, encryption, tenant isolation, or rate limiting complete based solely on dependencies or documentation.
 4. Do not add external runtimes or providers before their audits and interface decisions.
@@ -63,10 +74,11 @@ The initial ERS slice is contracts and interfaces only. It does not yet provide 
 ## Next engineering priorities
 
 1. Run server typecheck, Playwright client tests, and authenticated API integration tests against local D1.
-2. Implement a concrete tenant resolution model and authorization service before exposing generic ERS reads.
-3. Add append-only D1 event and assertion/evidence persistence with additive migrations.
-4. Adapt existing memory records through compatibility repositories without breaking /api/memory.
-5. Add cross-tenant isolation, provenance, temporal-history, and memory-retrieval tests.
-6. Add memory export, retention, correction history, and account deletion workflows.
-7. Complete rate limits and abuse controls.
-8. Define durable task, audit, and runtime adapter contracts.
+2. Resolve the Engram Intelligence principal from authenticated server context and test tenant isolation before wiring it into the conversation lifecycle.
+3. Implement a concrete tenant resolution model and authorization service before exposing generic ERS reads.
+4. Add append-only D1 event and assertion/evidence persistence with additive migrations.
+5. Adapt existing memory records through compatibility repositories without breaking /api/memory.
+6. Add cross-tenant isolation, provenance, temporal-history, and memory-retrieval tests.
+7. Add memory export, retention, correction history, and account deletion workflows.
+8. Complete rate limits and abuse controls.
+9. Define durable task, audit, and runtime adapter contracts.
