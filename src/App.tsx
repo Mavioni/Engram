@@ -17,10 +17,12 @@ import ReactDOM from 'react-dom'
 type GlobalShim = {
   React: typeof React
   ReactDOM: typeof ReactDOM
+  ENGRAM_API_URL: string
 }
 const globalShim = window as unknown as Window & GlobalShim
 globalShim.React = React
 globalShim.ReactDOM = ReactDOM
+globalShim.ENGRAM_API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8787"
 
 // 2) Side-effect imports — each file mutates `window.<Name>` on load.
 //    Order matters: primitives + icons before screens that use them.
