@@ -10,6 +10,7 @@ import { Hono } from "hono";
 import type { MiddlewareHandler, Next } from "hono";
 import { createAuth } from "./auth/better-auth";
 import { handleIris } from "./iris";
+import { memoryRoutes } from "./memory";
 
 export type Env = {
   DB: D1Database;
@@ -42,7 +43,7 @@ app.all("/api/auth/*", async (c) => {
 // Fail-closed session middleware. Requests without a valid session never
 // reach protected application handlers.
 const requireAuth: MiddlewareHandler<AppEnv> = async (c, next: Next) => {
-  if (!c.env.BETTER_AUTH_SECRET || !c.env.DB) {
+  if (!c.env.BETTER_AUTH_SECRET || !c.env.BETTER_AUTH_URL || !c.env.DB) {
     return c.json({ error: "authentication is not configured" }, 503);
   }
 
@@ -66,6 +67,9 @@ const requireAuth: MiddlewareHandler<AppEnv> = async (c, next: Next) => {
 // /api/iris remains a compatibility route during the client migration.
 app.post("/api/iris", requireAuth, handleIris);
 app.post("/api/intelligence", requireAuth, handleIris);
+
+// Canonical user-owned persistent memory API.
+app.route("/api/memory", memoryRoutes(requireAuth));
 
 app.get("/api/me", requireAuth, (c) => {
   return c.json({ user: c.get("user") });
