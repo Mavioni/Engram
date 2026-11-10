@@ -1,5 +1,4 @@
-import type { D1Database } from "@cloudflare/workers-types";
-import { isErsEventType } from "./registry";
+import { isErsEventType, isErsProvenanceKind } from "./registry";
 import type { ErsEvent, ErsPage, ErsQueryScope, Principal } from "./types";
 
 const MAX_PAYLOAD_BYTES = 16_384;
@@ -26,6 +25,11 @@ type EventRow = {
 };
 
 type EventCursor = { recordedAt: string; id: string };
+
+function isCanonicalIso(value: string): boolean {
+  if (!Number.isFinite(Date.parse(value))) return false;
+  try { return new Date(value).toISOString() === value; } catch { return false; }
+}
 
 function samePrincipal(a: Principal, b: Principal): boolean {
   return a.kind === b.kind && a.id === b.id;
@@ -62,7 +66,7 @@ function decodeCursor(value: string): EventCursor {
       typeof (parsed as EventCursor).id !== "string"
     ) throw new Error("invalid cursor");
     const cursor = parsed as EventCursor;
-    if (!Number.isFinite(Date.parse(cursor.recordedAt)) || !cursor.id || cursor.id.length > 128) {
+    if (!isCanonicalIso(cursor.recordedAt) || !cursor.id || cursor.id.length > 128) {
       throw new Error("invalid cursor");
     }
     return cursor;
@@ -113,12 +117,19 @@ export class D1ErsEventRepository {
       throw new Error("invalid ERS event schema version");
     }
     if (!event.id || event.id.length > 128) throw new Error("invalid ERS event id");
-    if (!Number.isFinite(Date.parse(event.occurredAt)) || !Number.isFinite(Date.parse(event.recordedAt))) {
+    if (!isCanonicalIso(event.occurredAt) || !isCanonicalIso(event.recordedAt)) {
       throw new Error("invalid ERS event timestamp");
     }
     if (!["public", "internal", "confidential", "restricted"].includes(event.sensitivity)) {
       throw new Error("invalid ERS event sensitivity");
     }
+
+    if (!isErsProvenanceKind(event.provenance?.kind) || typeof event.provenance.source !== "string" || !event.provenance.source.trim() || event.provenance.source.length > 300 || !isCanonicalIso(event.provenance.recordedAt)) {
+      throw new Error("invalid ERS event provenance");
+    }
+    if (event.contextId && event.contextId.length > 128) throw new Error("invalid ERS event context");
+    if (event.correlationId && event.correlationId.length > 128) throw new Error("invalid ERS event correlation id");
+    if (event.causationId && event.causationId.length > 128) throw new Error("invalid ERS event causation id");
 
     const payloadJson = JSON.stringify(event.payload);
     const provenanceJson = JSON.stringify(event.provenance);
