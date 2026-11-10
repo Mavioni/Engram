@@ -117,7 +117,7 @@ export function isEngramIntelligenceConfigurationValid(
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
 
   const candidate = value as Record<string, unknown>;
-  if (!Number.isSafeInteger(candidate.version) || (candidate.version as number) < 1) {
+  if (typeof candidate.version !== "number" || !Number.isSafeInteger(candidate.version) || candidate.version < 1) {
     return false;
   }
   if (
