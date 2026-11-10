@@ -10,7 +10,7 @@
 - API: Cloudflare Workers with Hono.
 - Persistence: Cloudflare D1.
 - Authentication: Better Auth 1.6.9, using its native D1 binding support.
-- Inference: Anthropic SDK; current intelligence handler still references Claude Sonnet.
+- Inference: Anthropic SDK behind the Engram Reasoning provider contract; Anthropic remains the only implemented provider adapter.
 
 ## Implemented platform slices
 
@@ -24,6 +24,7 @@
 - Memory records include type, source, provenance, optional confidence, expiry, and timestamps.
 - Engram Intelligence can retrieve up to 20 non-expired user memories (bounded to 6,000 characters) only when the request explicitly sets `useMemory: true`; retrieved content is framed as untrusted reference data.
 - Conversation sessions are created under the authenticated user, and client-supplied session IDs are accepted only when ownership is verified. New sessions are returned to clients.
+- Engram Reasoning now defines provider-neutral request, response, usage, and streaming-event contracts; Anthropic is isolated in its own adapter.
 - The latest user turn and assistant response are persisted against the verified session, avoiding the prior orphan-message foreign-key failure.
 - Model-inferred memories are not silently persisted. Accepted provenance values are user_stated, user_imported, and user_approved.
 - D1 migration directory is explicitly configured as src/db/migrations.
@@ -36,7 +37,7 @@
 - Authentication establishes identity, not organization/project authorization or shared-workspace tenancy.
 - Email verification and password-reset delivery are not configured; verification mail remains disabled.
 - Production `BETTER_AUTH_URL` and `APP_ORIGINS` must be configured before deployment; production CORS, cookie behavior, and trusted-origin settings still require smoke tests.
-- Intelligence remains directly coupled to Anthropic; Engram Reasoning provider abstraction is not implemented.
+- Engram Reasoning currently has only the Anthropic adapter; additional providers, routing policy, fallback behavior, and cost controls are not implemented.
 - Rate-limit enforcement remains a stub.
 - Legacy profile mirroring can fail if an existing profile row has a conflicting email under a different ID; migration reconciliation is still needed.
 - Memory retention, export, correction history, and account-erasure workflows remain incomplete.
@@ -58,5 +59,5 @@
 3. Add server-side tests for user isolation, session ownership, and memory retrieval opt-in.
 4. Add memory export, retention, correction history, and account deletion workflows.
 5. Complete rate limits and abuse controls.
-6. Decouple inference behind an Engram Reasoning provider interface.
+6. Add and validate additional Engram Reasoning adapters, routing policy, fallback behavior, and cost controls.
 7. Define durable task, audit, and runtime adapter contracts.
