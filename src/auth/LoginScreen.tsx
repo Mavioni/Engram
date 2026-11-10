@@ -118,7 +118,7 @@ export default function LoginScreen({ onSignedIn, onNavigateRegister, onNavigate
       </div>
 
       <footer style={{ padding: "24px 40px 32px", textAlign: "center", fontSize: 11, color: "var(--ink-4)" }}>
-        End-to-end encrypted · IRIS won't remember unless you ask her to
+        Account-based access · Memory is used only when you enable it
       </footer>
     </div>
   );
