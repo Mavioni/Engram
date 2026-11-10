@@ -4,7 +4,7 @@
  *
  * Responsibilities:
  *  1. Validate + scrub incoming messages
- *  2. Call Anthropic Sonnet 4.6 with prompt-cached system prompt
+ *  2. Resolve Engram Intelligence and call its configured Anthropic model
  *  3. Stream response as Server-Sent Events (SSE)
  *  4. Persist token usage to D1 `messages` table for billing
  *  5. Rate-limit stub (TODO: enforce free-tier 30 turns/day via KV)
@@ -14,6 +14,7 @@
 import type { Context } from "hono";
 import type { Env } from "./index";
 import { IRIS_SYSTEM_PROMPT } from "./iris-prompt";
+import type { EngramIntelligencePrincipal } from "./identity/engram-intelligence";
 import { D1EngramIntelligencePrincipalRepository } from "./identity/engram-intelligence-principals";
 import { createAnthropicReasoningProvider } from "./reasoning/anthropic";
 
@@ -286,7 +287,7 @@ export async function handleIris(
   // implemented yet and must not be inferred from client-supplied fields.
   const tenantId = `personal:${user.id}`;
   const principals = new D1EngramIntelligencePrincipalRepository(c.env.DB);
-  let intelligencePrincipal;
+  let intelligencePrincipal: EngramIntelligencePrincipal;
   try {
     intelligencePrincipal = await principals.getOrCreateForTenant(tenantId);
   } catch (err) {
@@ -296,6 +297,17 @@ export async function handleIris(
 
   if (intelligencePrincipal.status !== "active") {
     return c.json({ error: "Engram Intelligence is not active for this tenant" }, 403);
+  }
+
+  const capabilityCeiling = intelligencePrincipal.configuration.capabilityCeiling;
+  if (
+    !capabilityCeiling.includes("conversation.respond") ||
+    !capabilityCeiling.includes("reasoning.invoke")
+  ) {
+    return c.json({ error: "Engram Intelligence lacks the required capability ceiling" }, 403);
+  }
+  if (body.useMemory === true && !capabilityCeiling.includes("memory.read")) {
+    return c.json({ error: "Engram Intelligence is not configured to read memory" }, 403);
   }
 
   // Anthropic is the only provider adapter implemented in this Worker.
