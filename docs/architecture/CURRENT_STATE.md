@@ -57,7 +57,7 @@ The initial ERS slice is contracts and interfaces only. It does not yet provide 
 2. Preserve existing reflection and assessment capabilities as Engram features.
 3. Do not declare authorization, encryption, tenant isolation, or rate limiting complete based solely on dependencies or documentation.
 4. Do not add external runtimes or providers before their audits and interface decisions.
-5. Preserve the existing MIT license unless a deliberate, reviewed licensing decision changes it.
+5. The repository is licensed under GNU AGPL-3.0-only. Third-party dependencies retain their own licenses; review provenance and compatibility before incorporating external code. Network deployments of modified versions must provide users access to the corresponding source under AGPL section 13.
 6. Do not treat ERS interfaces or E8-derived coordinates as proof of authorization or canonical truth.
 
 ## Next engineering priorities
