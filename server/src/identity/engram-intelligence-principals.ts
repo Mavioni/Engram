@@ -127,6 +127,67 @@ export class D1EngramIntelligencePrincipalRepository {
     return created;
   }
 
+  /**
+   * Return the tenant's principal, creating a conservative default if absent.
+   * The caller must supply a tenant derived from authenticated server context.
+   * INSERT OR IGNORE makes first-request initialization safe under concurrency.
+   */
+  async getOrCreateForTenant(
+    tenantId: string,
+  ): Promise<EngramIntelligencePrincipal> {
+    if (!tenantId.trim() || tenantId.length > 256) {
+      throw new Error("invalid Engram Intelligence tenant id");
+    }
+
+    const existing = await this.getForTenant(tenantId);
+    if (existing) return existing;
+
+    const now = new Date().toISOString();
+    const configuration: EngramIntelligenceConfiguration = {
+      version: 1,
+      behaviorProfile: "default",
+      instructionSetVersion: "engram-intelligence-v1",
+      capabilityCeiling: [
+        "conversation.respond",
+        "memory.read",
+        "reasoning.invoke",
+      ],
+      modelBindings: [{
+        provider: "anthropic",
+        model: "claude-sonnet-4-6",
+        policyProfile: "default",
+      }],
+    };
+    validateCreate({
+      id: crypto.randomUUID(),
+      tenantId,
+      displayName: "Engram Intelligence",
+      configuration,
+      createdAt: now,
+    });
+
+    await this.db.prepare(
+      `INSERT OR IGNORE INTO engram_intelligence_principals (
+        id, tenant_id, canonical_name, display_name, status,
+        configuration_version, configuration_json, created_at, updated_at
+      ) VALUES (?, ?, 'engram-intelligence', ?, 'active', ?, ?, ?, ?)`
+    ).bind(
+      crypto.randomUUID(),
+      tenantId,
+      "Engram Intelligence",
+      configuration.version,
+      JSON.stringify(configuration),
+      now,
+      now,
+    ).run();
+
+    const createdOrExisting = await this.getForTenant(tenantId);
+    if (!createdOrExisting) {
+      throw new Error("Engram Intelligence principal could not be initialized");
+    }
+    return createdOrExisting;
+  }
+
   async getById(
     tenantId: string,
     id: string,
