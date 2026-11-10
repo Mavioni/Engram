@@ -50,6 +50,7 @@ export function createAuth(env: Env) {
       "http://localhost:8787",
       "capacitor://localhost",
       "http://localhost",
+      ...(env.APP_ORIGINS ?? "").split(",").map((origin) => origin.trim()).filter(Boolean),
     ],
   });
 }
