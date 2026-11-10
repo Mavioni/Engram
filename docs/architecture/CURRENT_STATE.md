@@ -41,7 +41,8 @@
 - Rate-limit enforcement remains a stub.
 - Legacy profile mirroring can fail if an existing profile row has a conflicting email under a different ID; migration reconciliation is still needed.
 - Memory retention, export, correction history, and account-erasure workflows remain incomplete.
-- A Playwright client contract test now mocks the Intelligence endpoint and checks transcript shape, session continuity, and explicit memory opt-in. It has not yet been executed.
+- A Playwright client contract test mocks the Better Auth session and Intelligence endpoint, then checks transcript shape, session continuity, and explicit memory opt-in.
+- GitHub Actions CI now runs client typecheck/build/browser tests and a separate Cloudflare Worker typecheck. The first run is pending; the workflow has not yet been observed passing.
 - No server typecheck, D1 migration, live D1 integration test, or deployment smoke test has been run for this implementation slice.
 
 ## Migration constraints
