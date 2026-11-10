@@ -5,7 +5,7 @@
 
 ## 1. System responsibility
 
-Engram is the authoritative intelligence and coordination platform. It provides persistent identity and a user experience across models, agent runtimes, devices, and clients.
+Engram is the authoritative intelligence and coordination platform. It provides persistent identity and a user experience across models, agent runtimes, devices, and clients. Its primary intelligence presence is **Sakanafugu**: an Engram-owned agent/principal that inhabits the platform, reasons through replaceable model providers, remembers through authorized Engram services, and acts only through Engram-governed orchestration.
 
 Engram—not an external runtime—owns user and agent identity, canonical memory and knowledge provenance, task lifecycle and approvals, authorization policy, provider selection and cost policy, and audit records.
 
@@ -59,7 +59,7 @@ Memory distinguishes observed facts, user-stated facts, inferences with confiden
 Owns entities, relationships, evidence, and graph queries. It may use relational, graph, and vector technologies behind repository-owned interfaces.
 
 ### Engram Reasoning
-Owns provider abstraction, routing policy, model selection, fallback, budget enforcement, structured-output validation, and inference tracing. Anthropic is the current provider implementation. OpenRouter and direct providers are candidates. Sakana Fugu is a candidate coordination service, not a mandatory dependency.
+Owns provider abstraction, routing policy, model selection, fallback, budget enforcement, structured-output validation, and inference tracing. Anthropic is the current provider implementation. An OpenAI API adapter is the intended next candidate for powering Sakanafugu; it must not depend on embedding or controlling the consumer ChatGPT application. OpenRouter and direct providers remain optional. Sakana Fugu is a separate candidate coordination service, not the Sakanafugu identity.
 
 ### Engram Orchestration
 Owns task graphs, scheduling policy, delegation, approvals, retries, cancellation, and recovery. It decides what may execute and under what authority.
@@ -89,7 +89,7 @@ OpenCoven's local-first design and OpenClaw's deployment model must be verified 
 
 1. Client authenticates to Engram.
 2. Gateway resolves tenant, user, session, and request limits.
-3. Intelligence loads only authorized context.
+3. Sakanafugu resolves its Engram-owned principal and loads only authorized context.
 4. Memory and Knowledge retrieve provenance-bearing records.
 5. Reasoning selects a model/provider under policy and budget.
 6. Orchestration creates a durable task if action is required.
