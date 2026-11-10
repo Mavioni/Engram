@@ -280,15 +280,6 @@ export async function handleIris(
       return c.json({ error: "memory context could not be loaded" }, 500);
     }
   }
-  const system = [
-    {
-      type: "text" as const,
-      text: IRIS_SYSTEM_PROMPT,
-      cache_control: { type: "ephemeral" as const },
-    },
-    ...(memoryContext ? [{ type: "text" as const, text: memoryContext }] : []),
-  ];
-
   // Persist only the newest user turn; the client may send the full transcript.
   const latestUserMessage = [...messages].reverse().find((message) => message.role === "user");
   if (latestUserMessage) {
