@@ -8,7 +8,7 @@ This repository contains the existing Engram mobile/web client and Cloudflare Wo
 
 Revenant A.I. LLC is the company designated by the user to develop and steward Engram. Corporate registration, current good standing, ownership records, and any Arizona qualification or domestication remain separate legal matters and are not inferred from this software repository.
 
-Engram is the flagship platform. External AI providers, including Sakana AI, are vendors or technology integrations—not the owner of Engram's identity, data, memory, policy, or control plane.
+Engram is the flagship platform. External AI providers are vendors or technology integrations—not the owner of Engram's identity, data, memory, policy, or control plane.
 
 ## Canonical product domains
 
@@ -51,12 +51,12 @@ IRIS is a legacy implementation label. Its capability is now named **Engram Inte
 | Omarchy | Arch/Hyprland desktop environment | Optional Engram Workstation; not a cloud dependency |
 | Businesses-Manager / OSA | Existing workflows, orchestration, business logic, memory | Selective reuse after coupling, security, and license audit |
 | Project-Engram | Existing product UX, assessment, reflection, and interface concepts | Product reference; not the architecture to retrofit |
-| Sakana AI Fugu | External multi-agent model/service exposed through the Sakana API | Optional Engram Reasoning adapter; not Engram identity or orchestration authority |
+| Sakana AI Fugu | External multi-agent model/service | **Blocked for Engram development/integration pending written authorization and acceptable data terms** |
 | OpenRouter | Model/provider routing | Optional inference adapter with direct-provider fallback |
 | Meta TRIBE v2 | Neuroscience research model | Research only; not an agent framework; license suitability requires review |
 | BitNet | Low-bit inference optimization | Optional future optimization, not a core dependency |
 
-These are candidates, not completed integrations. See docs/architecture/INTEGRATIONS.md.
+See docs/architecture/INTEGRATIONS.md for candidate boundaries and admission gates.
 
 ## Current implementation
 
@@ -85,7 +85,7 @@ Never commit secrets. See .env.example and server/wrangler.toml.
 
 ## Scope and status
 
-These documents describe intended architecture and staged work. They do not imply that OpenClaw, OpenCoven, OMI, Omarchy, OSA, Sakana AI Fugu, OpenRouter, or other candidates have been integrated, security-reviewed, or deployed. The code changes in this branch do not deploy infrastructure or apply D1 migrations.
+These documents describe intended architecture and staged work. They do not imply that OpenClaw, OpenCoven, OMI, Omarchy, OSA, OpenRouter, or other candidates have been integrated, security-reviewed, or deployed. Sakana AI Fugu is specifically not an admitted integration and must not be used for Engram development or user data until the contractual gate in docs/decisions/2026-11-10-sakana-fugu-admission-gate.md is resolved. The code changes in this branch do not deploy infrastructure or apply D1 migrations.
 
 ## License
 
