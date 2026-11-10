@@ -3,7 +3,7 @@
 **Repository:** Mavioni/Engram  
 **Branch reviewed:** master  
 **Review basis:** repository source, package lock, Worker configuration, and D1 schema.  
-**Note:** This assessment describes the reviewed baseline before the Engram Intelligence principal correction on branch `fix/engram-intelligence-identity`.
+**Note:** The baseline below is supplemented by the in-progress changes on branch `fix/engram-intelligence-identity`; merge and production deployment have not occurred.
 
 ## Existing foundation
 
@@ -39,7 +39,7 @@ The prior branch contained a mistakenly named principal contract, repository, an
 
 The existing migration 0004 is retained as historical migration input. New migration 0005 creates the canonical `engram_intelligence_principals` table, copies any existing rows into it, and removes the legacy table. This preserves an applied migration history if migration 0004 has already run. Migration 0005 is additive and has not been applied remotely by this change.
 
-The new principal contract/repository is still an isolated identity slice. It is not yet called from the authenticated request lifecycle, does not yet establish a production tenant model, and must not be presented as a complete authorization service.
+The new principal contract/repository is now resolved from the authenticated conversation route. The route derives only the current personal tenant namespace `personal:<authenticated-user-id>`, initializes one default principal per tenant with an idempotent insert, rejects inactive principals, checks the principal capability ceiling for conversation/reasoning and optional memory reads, and selects only a configured Anthropic model because that is the only implemented provider adapter. The principal ID is returned as additive response metadata. This is not a complete workspace tenant model or authorization-grant service; the capability ceiling is not a substitute for runtime authority grants.
 
 ## ERS implementation boundary
 
@@ -51,7 +51,7 @@ The initial ERS slice is contracts and interfaces only. It does not yet provide 
 - Credentialed API CORS and Better Auth trusted origins accept local development origins plus an explicit comma-separated APP_ORIGINS deployment variable.
 - Production BETTER_AUTH_URL and APP_ORIGINS must be configured before deployment; production CORS, cookie behavior, and trusted-origin settings still require smoke tests.
 - Authentication establishes identity, not organization/project authorization or shared-workspace tenancy.
-- The Engram Intelligence principal repository is not yet wired into authenticated request handling or the Intelligence route.
+- The Engram Intelligence principal route integration depends on migration 0005 being applied in the target database; it has not been applied remotely.
 - Email verification and password-reset delivery are not configured; verification mail remains disabled.
 - Engram Reasoning currently has only the Anthropic adapter. OpenAI routing and provider fallback are not yet implemented.
 - Sakana AI Fugu is not admitted as a provider. Its published API terms create a potential conflict with Engram product development and prohibit inputting personal data. Do not implement or call it until written authorization or revised enterprise terms have been obtained and reviewed.
@@ -59,7 +59,7 @@ The initial ERS slice is contracts and interfaces only. It does not yet provide 
 - Legacy profile mirroring can fail if an existing profile row has a conflicting email under a different ID; migration reconciliation is still needed.
 - Memory retention, export, correction history, and account-erasure workflows remain incomplete.
 - A Playwright client contract test mocks the Better Auth session and Intelligence endpoint, then checks transcript shape, session continuity, and explicit memory opt-in.
-- GitHub Actions CI runs client typecheck/build/browser tests and a separate Cloudflare Worker typecheck; current branch CI must be checked independently.
+- GitHub Actions CI runs client typecheck/build/browser tests and a separate Cloudflare Worker typecheck; the current head's run must be checked before merge.
 - No remote D1 migration, backend deployment, or production smoke test is performed by the correction branch.
 
 ## Migration constraints
