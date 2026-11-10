@@ -126,6 +126,34 @@ function newId(): string {
   return `${ts}${rand}`;
 }
 
+/**
+ * Ensure the authenticated user has a legacy profile row and a conversation
+ * session owned by that user. A client-provided session ID is never trusted
+ * without an ownership check; an unknown or foreign ID is replaced.
+ */
+async function ensureOwnedSession(
+  db: D1Database,
+  user: { id: string; email: string },
+  requestedSessionId?: string
+): Promise<string> {
+  await db.prepare(
+    "INSERT INTO users (id, email) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET email = excluded.email"
+  ).bind(user.id, user.email).run();
+
+  if (requestedSessionId) {
+    const existing = await db.prepare(
+      "SELECT id FROM ai_sessions WHERE id = ? AND user_id = ?"
+    ).bind(requestedSessionId, user.id).first();
+    if (existing) return requestedSessionId;
+  }
+
+  const sessionId = newId();
+  await db.prepare(
+    "INSERT INTO ai_sessions (id, user_id, model) VALUES (?, ?, ?)"
+  ).bind(sessionId, user.id, MODEL).run();
+  return sessionId;
+}
+
 // ---------------------------------------------------------------------------
 // Rate-limit stub
 // ---------------------------------------------------------------------------
@@ -184,7 +212,22 @@ export async function handleIris(
     return c.json({ error: String(err) }, 422);
   }
 
-  const sessionId = body.sessionId ?? newId();
+  let sessionId: string;
+  try {
+    sessionId = await ensureOwnedSession(c.env.DB, user, body.sessionId);
+  } catch (err) {
+    console.error("[iris] conversation session initialization failed", err);
+    return c.json({ error: "conversation session could not be initialized" }, 500);
+  }
+
+  // Persist only the newest user turn; the client may send the full transcript.
+  const latestUserMessage = [...messages].reverse().find((message) => message.role === "user");
+  if (latestUserMessage) {
+    await persistMessage(c.env.DB, {
+      id: newId(), sessionId, role: "user", content: latestUserMessage.content,
+      tokensIn: 0, tokensOut: 0, cacheReadTokens: 0,
+    });
+  }
 
   // ----- Anthropic client -----
   const anthropic = new Anthropic({ apiKey: c.env.ANTHROPIC_API_KEY });
@@ -257,7 +300,7 @@ export async function handleIris(
         const finalMsg = await stream.finalMessage();
         await writeSSE(
           "done",
-          JSON.stringify({ stopReason: finalMsg.stop_reason })
+          JSON.stringify({ stopReason: finalMsg.stop_reason, sessionId })
         );
       } catch (err: unknown) {
         const isAnthropicError =
@@ -346,7 +389,7 @@ export async function handleIris(
     });
 
     return c.json(
-      { content, stopReason: response.stop_reason },
+      { content, stopReason: response.stop_reason, sessionId },
       200,
       { "X-RateLimit-Remaining": String(remaining - 1) }
     );
