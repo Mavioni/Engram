@@ -9,7 +9,7 @@ Engram is the authoritative intelligence and coordination platform. **Engram Int
 
 Engram—not an external model provider or runtime—owns user and agent identity, canonical memory and knowledge provenance, task lifecycle and approvals, authorization policy, provider selection and cost policy, and audit records. No model, provider account, or external agent platform is the canonical identity of Engram Intelligence.
 
-External technologies may provide inference, multi-model coordination, execution, device capture, or workstation capabilities behind replaceable interfaces.
+External technologies may provide inference, multi-model coordination, execution, device capture, or workstation capabilities behind replaceable interfaces, subject to explicit admission gates.
 
 ## 2. Logical architecture
 
@@ -64,9 +64,9 @@ Owns entities, relationships, evidence, and graph queries. It may use relational
 
 ### Engram Reasoning
 
-Owns provider abstraction, routing policy, model selection, fallback, budget enforcement, structured-output validation, and inference tracing. Anthropic is the current implemented provider adapter. OpenAI and Sakana AI Fugu are candidate adapters, not yet implemented here.
+Owns provider abstraction, routing policy, model selection, fallback, budget enforcement, structured-output validation, and inference tracing. Anthropic is the current implemented provider adapter. OpenAI is a candidate adapter, not yet implemented here.
 
-Sakana AI is a Tokyo-based AI company. Its Fugu product is described by Sakana AI as a multi-agent system delivered through a single model/API. If admitted, Fugu sits behind an Engram Reasoning adapter as an external inference/coordination provider. It is not Engram's primary intelligence identity, canonical memory, authorization authority, task ledger, or control plane. Before sending non-public user data to it, validate contractual terms, data handling/retention, provider-pool controls, pricing, quotas, latency, and fallback behavior. Do not hard-code Engram's state machine to Fugu-specific semantics.
+Sakana AI Fugu is an external multi-agent model/service. It is not currently an admitted Engram provider: the published API Terms contain restrictions that may conflict with developing or providing a competing AI service and prohibit inputting personal information. Its API Privacy Policy also says prompts, uploaded content, outputs, and related interaction data may be processed for service improvement and model training/fine-tuning, subject to available opt-outs. Do not invoke Fugu, transmit Engram data, or use it for Engram product development unless a written enterprise agreement or explicit written authorization resolves these restrictions and data-handling requirements. See the Sakana Fugu admission decision in docs/decisions/2026-11-10-sakana-fugu-admission-gate.md.
 
 ### Engram Orchestration
 
