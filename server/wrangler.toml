@@ -13,6 +13,7 @@ compatibility_flags = ["nodejs_compat"]
 binding = "DB"
 database_name = "engram"
 database_id = "ba2037a1-717c-4708-ae7c-f4f321db513a"
+migrations_dir = "src/db/migrations"
 
 [vars]
 # Non-secret env vars only. Secrets go through `wrangler secret put`.
