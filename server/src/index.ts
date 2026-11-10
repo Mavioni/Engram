@@ -7,6 +7,7 @@
  * and resource grants are introduced.
  */
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import type { MiddlewareHandler, Next } from "hono";
 import { createAuth } from "./auth/better-auth";
 import { handleIris } from "./iris";
@@ -18,6 +19,7 @@ export type Env = {
   BETTER_AUTH_SECRET: string;
   ENVIRONMENT: string;
   BETTER_AUTH_URL: string;
+  APP_ORIGINS?: string;
 };
 
 type UserContext = { id: string; email: string };
@@ -27,6 +29,29 @@ type AppEnv = {
 };
 
 const app = new Hono<AppEnv>();
+
+// Credentialed API requests are restricted to explicit app origins. Set
+// APP_ORIGINS to a comma-separated list for production and Capacitor builds.
+app.use("/api/*", async (c, next) => {
+  const configured = (c.env.APP_ORIGINS ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const allowed = new Set([
+    "http://localhost:5173",
+    "http://localhost:8787",
+    "capacitor://localhost",
+    "http://localhost",
+    ...configured,
+  ]);
+  return cors({
+    origin: (origin) => allowed.has(origin) ? origin : "",
+    credentials: true,
+    allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+    maxAge: 600,
+  })(c, next);
+});
 
 app.get("/", (c) => c.json({ ok: true, service: "engram-api" }));
 
