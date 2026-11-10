@@ -10,10 +10,16 @@ This is a candidate register, not a record of completed integrations.
 | Omarchy | Agent-friendly Linux desktop and developer workstation | Optional Engram Workstation profile | Distribution maintenance, device support, desktop-agent permission boundaries |
 | Businesses-Manager / OSA | Existing orchestration, workflows, memory and business operations | Selective adapters/modules, not a second platform control plane | Coupling, license, cloud readiness, authorization, secrets, tests, upstream divergence |
 | Project-Engram | Existing product and interface concepts | Feature-level reuse only after review | Local-first assumptions, license compatibility, data model and UX migration |
-| Sakana Fugu | Multi-model reasoning coordination | Engram Reasoning adapter | API access, pricing, privacy, latency, availability, terms, fallback |
-| OpenRouter | Multi-provider inference routing | Optional Engram Reasoning provider adapter | Provider/model availability, pricing, data policy, limits, fallback |
+| Sakana AI Fugu | External multi-agent model/service exposed through the Sakana API | Optional Engram Reasoning provider adapter; never canonical identity or task authority | Official API compatibility, account access, pricing, model-pool controls, data use/retention, quotas, latency, availability, terms, fallback |
+| OpenRouter | Model/provider routing | Optional Engram Reasoning provider adapter | Provider/model availability, pricing, data policy, limits, fallback |
 | Meta TRIBE v2 | Neuroscience research | Research boundary only | Scientific relevance, compute, license and commercial permissions |
 | BitNet | Efficient low-bit inference | Optional future inference optimization | Workload fit, quality, hardware economics and maintenance |
+
+## Sakana AI Fugu boundary
+
+Fugu is a Sakana AI product, not an Engram subsystem. Its role is to provide an optional, replaceable inference/coordination endpoint behind the Engram Reasoning contract. Engram must continue to own user/agent identity, tenant authorization, memory, durable task state, approvals, usage budgets, and audit history.
+
+No Fugu integration is considered complete until an adapter is implemented and tested, credentials are held server-side, per-request data is minimized, usage is metered, provider failures/timeouts are bounded, and a direct-provider fallback path is validated. Do not transmit sensitive or tenant-confidential memory before contractual and data-handling review.
 
 ## Adapter admission requirements
 
