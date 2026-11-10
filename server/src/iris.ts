@@ -337,7 +337,7 @@ export async function handleIris(
   // ----- Anthropic client -----
   const reasoning = createAnthropicReasoningProvider(c.env.ANTHROPIC_API_KEY);
   const reasoningRequest = {
-    model: MODEL,
+    model,
     maxTokens: MAX_TOKENS,
     systemPrompt: IRIS_SYSTEM_PROMPT,
     context: memoryContext || undefined,
