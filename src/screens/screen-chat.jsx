@@ -1,6 +1,7 @@
 // Chat with IRIS — premium edition
 
 const { useState, useEffect, useRef, useMemo } = React;
+const ENGRAM_API_URL = window.ENGRAM_API_URL || "http://localhost:8787";
 
 const QUICK_PROMPTS = [
   { label: "I'm feeling stuck", icon: "—" },
@@ -43,9 +44,9 @@ function ChatScreen({ onNavigate }) {
     setTyping(true);
 
     try {
-      const res = await fetch("/api/intelligence", {
+      const res = await fetch(`${ENGRAM_API_URL}/api/intelligence`, {
         method: "POST",
-        credentials: "same-origin",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: transcript.map((message) => ({
