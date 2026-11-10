@@ -291,10 +291,56 @@ function AuthGate() {
 
 // ----- root ----------------------------------------------------------------
 
+function LegalNotice() {
+  return (
+    <details
+      style={{
+        position: 'fixed',
+        left: 8,
+        bottom: 8,
+        zIndex: 1000,
+        maxWidth: 'min(340px, calc(100vw - 16px))',
+        color: 'var(--ink-3, #777)',
+        fontSize: 11,
+      }}
+    >
+      <summary
+        style={{
+          cursor: 'pointer',
+          listStyle: 'none',
+          border: '1px solid var(--line, #777)',
+          borderRadius: 999,
+          padding: '6px 10px',
+          background: 'var(--bg-card, #171717)',
+        }}
+      >
+        Legal · Source
+      </summary>
+      <div
+        style={{
+          marginTop: 6,
+          padding: 12,
+          border: '1px solid var(--line, #777)',
+          borderRadius: 10,
+          background: 'var(--bg-card, #171717)',
+          lineHeight: 1.6,
+        }}
+      >
+        <div>© 2026 Massimo Panella (Mavioni).</div>
+        <div>No warranty. You may convey this work under AGPL-3.0-only.</div>
+        <a href="https://github.com/Mavioni/Engram" target="_blank" rel="noreferrer">View corresponding source</a>
+        {' · '}
+        <a href="https://github.com/Mavioni/Engram/blob/master/LICENSE" target="_blank" rel="noreferrer">View license</a>
+      </div>
+    </details>
+  )
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <AuthGate />
+      <LegalNotice />
     </AuthProvider>
   )
 }
