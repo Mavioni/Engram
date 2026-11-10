@@ -152,7 +152,7 @@ async function checkRateLimit(
 // ---------------------------------------------------------------------------
 
 export async function handleIris(
-  c: Context<{ Bindings: Env; Variables: { user?: { id: string; email: string } } }>
+  c: Context<{ Bindings: Env; Variables: { user: { id: string; email: string } } }>
 ): Promise<Response> {
   const user = c.get("user");
   if (!user) {

@@ -1,72 +1,78 @@
 /**
- * Engram API — Cloudflare Workers entry
- * Router skeleton. Auth + IRIS handlers wired by sibling cells (mythos-orochimaru / naruto).
+ * Engram API — Cloudflare Workers entry point.
+ *
+ * Authentication is resolved from Better Auth on every protected request.
+ * Engram remains the authority for application authorization; this first
+ * slice establishes authenticated user context before tenant-scoped policy
+ * and resource grants are introduced.
  */
 import { Hono } from "hono";
+import type { MiddlewareHandler, Next } from "hono";
+import { createAuth } from "./auth/better-auth";
+import { handleIris } from "./iris";
 
-// --- Bindings ---
 export type Env = {
   DB: D1Database;
-  // Secrets (wrangler secret put ...)
   ANTHROPIC_API_KEY: string;
   BETTER_AUTH_SECRET: string;
-  // Vars
   ENVIRONMENT: string;
   BETTER_AUTH_URL: string;
 };
 
-// --- Hono app ---
-const app = new Hono<{ Bindings: Env; Variables: { user?: { id: string; email: string } } }>();
-
-// Health
-app.get("/", (c) => c.json({ ok: true, service: "engram-api" }));
-
-// ---------------------------------------------------------------------------
-// AUTH — Better Auth handler
-// TODO(mythos-orochimaru): export `auth` from ./auth.ts (Better Auth instance
-//   bound to D1 + BETTER_AUTH_SECRET). Mount via auth.handler(c.req.raw).
-// ---------------------------------------------------------------------------
-app.all("/api/auth/*", async (c) => {
-  // TODO: const { auth } = await import("./auth");
-  // return auth.handler(c.req.raw);
-  return c.json({ error: "auth handler not wired" }, 501);
-});
-
-// ---------------------------------------------------------------------------
-// AUTH MIDDLEWARE — gate routes below
-// TODO(mythos-orochimaru): resolve session from cookie/Bearer via Better Auth,
-//   attach user to c.set("user", ...) or 401.
-// ---------------------------------------------------------------------------
-const requireAuth = async (c: any, next: any) => {
-  // TODO: const session = await auth.api.getSession({ headers: c.req.raw.headers });
-  // if (!session) return c.json({ error: "unauthorized" }, 401);
-  // c.set("user", session.user);
-  return next();
+type UserContext = { id: string; email: string };
+type AppEnv = {
+  Bindings: Env;
+  Variables: { user: UserContext };
 };
 
-// ---------------------------------------------------------------------------
-// IRIS — Anthropic proxy (auth-required)
-// TODO(mythos-orochimaru): implement ./iris.ts with handler(c, env).
-// ---------------------------------------------------------------------------
-app.post("/api/iris", requireAuth, async (c) => {
-  // TODO: const { handleIris } = await import("./iris");
-  // return handleIris(c);
-  return c.json({ error: "iris handler not wired" }, 501);
+const app = new Hono<AppEnv>();
+
+app.get("/", (c) => c.json({ ok: true, service: "engram-api" }));
+
+// Better Auth owns sign-up, sign-in, sign-out, and session protocol endpoints.
+app.all("/api/auth/*", async (c) => {
+  if (!c.env.BETTER_AUTH_SECRET || !c.env.BETTER_AUTH_URL || !c.env.DB) {
+    return c.json({ error: "authentication is not configured" }, 503);
+  }
+
+  const auth = createAuth(c.env);
+  return auth.handler(c.req.raw);
 });
 
-// ---------------------------------------------------------------------------
-// ME — current user profile (auth-required)
-// ---------------------------------------------------------------------------
-app.get("/api/me", requireAuth, async (c) => {
-  const user = c.get("user");
-  if (!user) return c.json({ error: "unauthorized" }, 401);
-  return c.json({ user });
+// Fail-closed session middleware. Requests without a valid session never
+// reach protected application handlers.
+const requireAuth: MiddlewareHandler<AppEnv> = async (c, next: Next) => {
+  if (!c.env.BETTER_AUTH_SECRET || !c.env.DB) {
+    return c.json({ error: "authentication is not configured" }, 503);
+  }
+
+  const auth = createAuth(c.env);
+  const result = await auth.api.getSession({
+    headers: c.req.raw.headers,
+  });
+
+  if (!result?.user?.id || !result.user.email) {
+    return c.json({ error: "unauthorized" }, 401);
+  }
+
+  c.set("user", {
+    id: result.user.id,
+    email: result.user.email,
+  });
+
+  await next();
+};
+
+// /api/iris remains a compatibility route during the client migration.
+app.post("/api/iris", requireAuth, handleIris);
+app.post("/api/intelligence", requireAuth, handleIris);
+
+app.get("/api/me", requireAuth, (c) => {
+  return c.json({ user: c.get("user") });
 });
 
-// 404
 app.notFound((c) => c.json({ error: "not found" }, 404));
 
-// Error
 app.onError((err, c) => {
   console.error("[engram-api]", err);
   return c.json({ error: "internal" }, 500);
