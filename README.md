@@ -81,6 +81,6 @@ These documents describe intended architecture and staged work. They do not impl
 
 ## License
 
-Engram is licensed under **GNU Affero General Public License v3.0 only (AGPL-3.0-only)**. See [LICENSE](LICENSE) for the complete terms.
+Engram is licensed under **GNU Affero General Public License v3.0 only (AGPL-3.0-only)**. See [LICENSE](LICENSE) for the complete terms. The project copyright notice is in [COPYRIGHT](COPYRIGHT).
 
 If you deploy a modified version of Engram and users interact with it over a network, AGPL-3.0 requires you to offer those users the corresponding source code of the running version. Before operating a modified network deployment, ensure the application provides a clear, accessible source-code link. Third-party dependencies and integrations remain subject to their own licenses and terms.
