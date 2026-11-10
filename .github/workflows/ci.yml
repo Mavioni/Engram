@@ -38,3 +38,5 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npm run typecheck
+      - name: Test D1 migration chain
+        run: python3 scripts/test_d1_migrations.py

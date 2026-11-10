@@ -4,7 +4,7 @@
  *
  * Responsibilities:
  *  1. Validate + scrub incoming messages
- *  2. Call Anthropic Sonnet 4.6 with prompt-cached system prompt
+ *  2. Resolve Engram Intelligence and call its configured Anthropic model
  *  3. Stream response as Server-Sent Events (SSE)
  *  4. Persist token usage to D1 `messages` table for billing
  *  5. Rate-limit stub (TODO: enforce free-tier 30 turns/day via KV)
@@ -14,13 +14,14 @@
 import type { Context } from "hono";
 import type { Env } from "./index";
 import { IRIS_SYSTEM_PROMPT } from "./iris-prompt";
+import type { EngramIntelligencePrincipal } from "./identity/engram-intelligence";
+import { D1EngramIntelligencePrincipalRepository } from "./identity/engram-intelligence-principals";
 import { createAnthropicReasoningProvider } from "./reasoning/anthropic";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const MODEL = "claude-sonnet-4-6" as const;
 const MAX_TOKENS = 800;
 const MAX_CONTENT_CHARS = 4000;
 const MAX_MESSAGES = 40;
@@ -179,6 +180,7 @@ async function loadMemoryContext(db: D1Database, userId: string): Promise<string
 async function ensureOwnedSession(
   db: D1Database,
   user: { id: string; email: string },
+  model: string,
   requestedSessionId?: string
 ): Promise<string> {
   await db.prepare(
@@ -195,7 +197,7 @@ async function ensureOwnedSession(
   const sessionId = newId();
   await db.prepare(
     "INSERT INTO ai_sessions (id, user_id, model) VALUES (?, ?, ?)"
-  ).bind(sessionId, user.id, MODEL).run();
+  ).bind(sessionId, user.id, model).run();
   return sessionId;
 }
 
@@ -280,9 +282,47 @@ export async function handleIris(
     return c.json({ error: "useMemory must be a boolean" }, 422);
   }
 
+  // Tenant scope is derived only from the authenticated Better Auth user.
+  // This is the current personal-tenant convention; workspace tenancy is not
+  // implemented yet and must not be inferred from client-supplied fields.
+  const tenantId = `personal:${user.id}`;
+  const principals = new D1EngramIntelligencePrincipalRepository(c.env.DB);
+  let intelligencePrincipal: EngramIntelligencePrincipal;
+  try {
+    intelligencePrincipal = await principals.getOrCreateForTenant(tenantId);
+  } catch (err) {
+    console.error("[engram-intelligence] principal resolution failed", err);
+    return c.json({ error: "Engram Intelligence is temporarily unavailable" }, 503);
+  }
+
+  if (intelligencePrincipal.status !== "active") {
+    return c.json({ error: "Engram Intelligence is not active for this tenant" }, 403);
+  }
+
+  const capabilityCeiling = intelligencePrincipal.configuration.capabilityCeiling;
+  if (
+    !capabilityCeiling.includes("conversation.respond") ||
+    !capabilityCeiling.includes("reasoning.invoke")
+  ) {
+    return c.json({ error: "Engram Intelligence lacks the required capability ceiling" }, 403);
+  }
+  if (body.useMemory === true && !capabilityCeiling.includes("memory.read")) {
+    return c.json({ error: "Engram Intelligence is not configured to read memory" }, 403);
+  }
+
+  // Anthropic is the only provider adapter implemented in this Worker.
+  // Do not silently route a configured, unsupported provider to another vendor.
+  const modelBinding = intelligencePrincipal.configuration.modelBindings.find(
+    (binding) => binding.provider === "anthropic",
+  );
+  if (!modelBinding) {
+    return c.json({ error: "no supported reasoning provider is configured" }, 503);
+  }
+  const model = modelBinding.model;
+
   let sessionId: string;
   try {
-    sessionId = await ensureOwnedSession(c.env.DB, user, body.sessionId);
+    sessionId = await ensureOwnedSession(c.env.DB, user, model, body.sessionId);
   } catch (err) {
     console.error("[iris] conversation session initialization failed", err);
     return c.json({ error: "conversation session could not be initialized" }, 500);
@@ -309,7 +349,7 @@ export async function handleIris(
   // ----- Anthropic client -----
   const reasoning = createAnthropicReasoningProvider(c.env.ANTHROPIC_API_KEY);
   const reasoningRequest = {
-    model: MODEL,
+    model,
     maxTokens: MAX_TOKENS,
     systemPrompt: IRIS_SYSTEM_PROMPT,
     context: memoryContext || undefined,
@@ -349,7 +389,11 @@ export async function handleIris(
           } else if (event.type === "completed") {
             await writeSSE(
               "done",
-              JSON.stringify({ stopReason: event.stopReason, sessionId })
+              JSON.stringify({
+                stopReason: event.stopReason,
+                sessionId,
+                intelligencePrincipalId: intelligencePrincipal.id,
+              })
             );
           }
         }
@@ -417,7 +461,12 @@ export async function handleIris(
     });
 
     return c.json(
-      { content, stopReason: response.stopReason, sessionId },
+      {
+        content,
+        stopReason: response.stopReason,
+        sessionId,
+        intelligencePrincipalId: intelligencePrincipal.id,
+      },
       200,
       { "X-RateLimit-Remaining": String(remaining - 1) }
     );
