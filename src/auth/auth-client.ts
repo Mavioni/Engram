@@ -9,6 +9,6 @@ export const authClient = createAuthClient({
   baseURL,
 });
 
-export const { useSession, signIn, signUp, signOut, forgetPassword } = authClient;
+export const { useSession, signIn, signUp, signOut, requestPasswordReset } = authClient;
 
 export type AuthSession = ReturnType<typeof useSession>;
