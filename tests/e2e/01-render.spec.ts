@@ -1,5 +1,32 @@
 import { test, expect } from '@playwright/test'
 
+test.beforeEach(async ({ page }) => {
+  await page.route('**/api/auth/get-session', async (route) => {
+    const now = Date.now()
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        session: {
+          id: 'session-render-test',
+          token: 'render-test-token',
+          userId: 'user-render-test',
+          expiresAt: new Date(now + 60 * 60 * 1000).toISOString(),
+          createdAt: new Date(now).toISOString(),
+          updatedAt: new Date(now).toISOString(),
+        },
+        user: {
+          id: 'user-render-test',
+          name: 'Engram Render Test',
+          email: 'render-test@example.com',
+          emailVerified: true,
+          createdAt: new Date(now).toISOString(),
+          updatedAt: new Date(now).toISOString(),
+        },
+      }),
+    })
+  })
+})
 test('root mounts within 2s and shows IRIS chat header', async ({ page }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' })
 
