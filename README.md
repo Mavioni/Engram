@@ -62,7 +62,7 @@ See docs/architecture/INTEGRATIONS.md for candidate boundaries and admission gat
 
 The existing application uses React, Vite, Capacitor, Cloudflare Workers, Hono, D1, Better Auth, and Anthropic as its currently wired inference provider.
 
-Engram Identity now contains an initial Engram Intelligence principal contract and a tenant-scoped D1 repository. That slice is not yet resolved from authenticated requests or wired into the conversation route. The historical migration that created the former principal table is retained for migration history; a follow-on migration renames the stored data to the canonical Engram Intelligence table. No remote migration or backend deployment is authorized by this change.
+Engram Identity now contains an initial Engram Intelligence principal contract and a tenant-scoped D1 repository. The protected conversation route resolves the principal using a personal-tenant ID derived from the authenticated Better Auth user, creates a conservative default principal on first use, checks its active status and capability ceiling, and uses its configured Anthropic model binding. Workspace tenancy, a complete authorization-grant service, and end-to-end D1 integration tests are still outstanding. The historical migration that created the former principal table is retained for migration history; a follow-on migration renames stored data to the canonical Engram Intelligence table. No remote migration or backend deployment is authorized by this change.
 
 The existing /api/iris endpoint and IRIS source files are legacy implementation names; they do not indicate that the target architecture is complete. See docs/architecture/CURRENT_STATE.md.
 
