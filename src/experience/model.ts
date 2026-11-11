@@ -35,14 +35,35 @@ export function isEntry(v: unknown): v is NotebookEntry {
     (v.done === undefined || typeof v.done === 'boolean')
 }
 
-export function loadEntries(): NotebookEntry[] {
+export type NotebookStorageResult = { entries: NotebookEntry[]; error: string | null }
+
+/** Never overwrite an unreadable Notebook with a silently filtered or empty array. */
+export function readNotebookStorage(): NotebookStorageResult {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
+    if (raw === null) return { entries: [], error: null }
     const parsed: unknown = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-    return parsed.filter(isEntry)
-  } catch { return [] }
+    if (!Array.isArray(parsed) || !parsed.every(isEntry)) {
+      return { entries: [], error: 'Your stored Notebook could not be read safely. Original browser data has been preserved. Download a recovery copy in Settings before resetting.' }
+    }
+    return { entries: parsed, error: null }
+  } catch {
+    return { entries: [], error: 'Your stored Notebook could not be read safely. Original browser data has been preserved if storage is accessible. Check browser permissions and export a recovery copy before resetting.' }
+  }
+}
+
+export function downloadRawNotebook() {
+  const raw = localStorage.getItem(STORAGE_KEY)
+  if (raw === null) throw new Error('No Notebook data found to recover.')
+  const blob = new Blob([raw], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `engram-notebook-recovery-${new Date().toISOString().slice(0,10)}.json`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 export function freshEntry(kind: EntryKind): NotebookEntry {
   const now = new Date().toISOString()
