@@ -1,50 +1,33 @@
 import { test, expect } from '@playwright/test'
 
-test.beforeEach(async ({ page }) => {
-  await page.route('**/api/auth/get-session', async (route) => {
-    const now = Date.now()
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        session: {
-          id: 'session-render-test',
-          token: 'render-test-token',
-          userId: 'user-render-test',
-          expiresAt: new Date(now + 60 * 60 * 1000).toISOString(),
-          createdAt: new Date(now).toISOString(),
-          updatedAt: new Date(now).toISOString(),
-        },
-        user: {
-          id: 'user-render-test',
-          name: 'Engram Render Test',
-          email: 'render-test@example.com',
-          emailVerified: true,
-          createdAt: new Date(now).toISOString(),
-          updatedAt: new Date(now).toISOString(),
-        },
-      }),
-    })
-  })
+test('Notebook is the home screen with an honest empty state', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('heading', { name: /Make room for thought/i })).toBeVisible()
+  await expect(page.getByText('Your notebook starts here.')).toBeVisible()
+  await expect(page.getByText('Stored in this browser')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Notebook', exact: true }).first()).toBeVisible()
 })
 
-test('root mounts and shows the Today dashboard', async ({ page }) => {
-  await page.goto('/', { waitUntil: 'domcontentloaded' })
-  const irisHeader = page.getByRole('heading', { name: /Good (morning|afternoon|evening)/i })
-  await expect(irisHeader).toBeVisible({ timeout: 5_000 })
+test('note auto-saves on this device and survives browser reload', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'New page' }).click()
+  await page.getByRole('textbox', { name: 'Page title' }).fill('My new beginning')
+  await page.getByRole('textbox', { name: 'Page content' }).fill('I want to record what matters to me.')
+  await expect(page.getByText('My new beginning').first()).toBeVisible()
+  await expect.poll(async () => page.evaluate(() => localStorage.getItem('engram.notebook.v2')?.includes('My new beginning'))).toBe(true)
+  await page.reload()
+  await page.getByRole('button', { name: /My new beginning/ }).click()
+  await expect(page.getByRole('textbox', { name: 'Page title' })).toHaveValue('My new beginning')
+  await expect(page.getByRole('textbox', { name: 'Page content' })).toHaveValue('I want to record what matters to me.')
 })
 
-test('root applies the default appearance settings', async ({ page }) => {
-  await page.goto('/', { waitUntil: 'domcontentloaded' })
-  await expect(page.getByRole('heading', { name: /Good (morning|afternoon|evening)/i })).toBeVisible()
-  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.accent)).toBe('ocean')
-  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe('dark')
-})
-
-test('navigation exposes six destinations and the quick check-in action', async ({ page }) => {
-  await page.goto('/', { waitUntil: 'domcontentloaded' })
-  await expect(page.getByRole('heading', { name: /Good (morning|afternoon|evening)/i })).toBeVisible()
-  const navButtons = page.locator('nav button')
-  await expect(navButtons).toHaveCount(7)
-  await expect(navButtons.filter({ has: page.locator('svg') })).toHaveCount(7)
+test('task completion appears in actual Today counts', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'New task' }).click()
+  await page.getByRole('textbox', { name: 'Page title' }).fill('Finish my reading')
+  await page.getByRole('button', { name: 'Today', exact: true }).first().click()
+  await expect(page.getByText('Finish my reading')).toBeVisible()
+  await expect(page.getByText('OPEN TASKS')).toBeVisible()
+  await page.getByRole('checkbox').check()
+  await expect(page.getByText('Finish my reading')).toHaveCount(0)
 })
