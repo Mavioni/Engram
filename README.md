@@ -1,5 +1,16 @@
 # Engram
 
+## Engram Notebook — live product direction
+
+**The Notebook is the app. The Engram is the visualization of real, user-authored data.**
+
+The current website redesign puts a genuinely usable Notebook first. It includes auto-saved local notes, journals, tasks, full mood check-ins, explicit tags, search, JSON export/import, a 3D perspective graph of real pages, and local-only IRIS recall. No sample memories, simulated users, or fabricated insights appear. See [Notebook-first product specification](docs/PRODUCT_NOTEBOOK_V2.md).
+
+**Preview:** https://mavioni.github.io/Engram/ (GitHub Pages must complete its verification/deployment workflow before the new UI is served).
+
+**Current limitations:** Browser storage is local to the current device, not encrypted or cloud-synced. D1 Notebook API and migration code exist, but production deployment, sign-in, migration application, cross-device sync, and AI inference are **not verified**. The site intentionally does not claim these services are live.
+
+
 **Engram is a cloud-first intelligence and agent platform with persistent identity, memory, reasoning, governed execution, and a unified user experience.**
 
 This repository contains the existing Engram mobile/web client and Cloudflare Worker backend, together with the evolving target platform architecture. The current application is a starting implementation, not the complete target platform.
