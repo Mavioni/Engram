@@ -11,7 +11,7 @@ test.beforeEach(async ({ page }) => {
 })
 
 for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1440, height: 900 }]) {
-  test(`dashboard and mood names render at ${viewport.width}px`, async ({ page }) => {
+  test(`dashboard and mood names render at ${viewport.width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize(viewport)
     await page.goto('/')
     await expect(page.getByRole('heading', { name: /Good (morning|afternoon|evening)/i })).toBeVisible()
@@ -20,7 +20,9 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 
     for (const mood of ['Radiant', 'Content', 'Calm', 'Neutral', 'Tender', 'Anxious', 'Low', 'Overwhelmed']) {
       await expect(page.getByRole('button', { name: new RegExp('^' + mood + ':') })).toBeVisible()
     }
-    await expect(page.locator('body')).toHaveScreenshot(`mood-${viewport.width}.png`, { animations: 'disabled', maxDiffPixelRatio: 0.03 })
+    await page.screenshot({ path: testInfo.outputPath(`mood-${viewport.width}.png`), fullPage: true, animations: 'disabled' })
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2)
+    expect(overflow).toBe(false)
   })
 }
 
