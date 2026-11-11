@@ -30,14 +30,6 @@ jobs:
       run:
         working-directory: server
 
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-      BETTER_AUTH_URL: ${{ vars.BETTER_AUTH_URL }}
-      APP_ORIGINS: ${{ vars.APP_ORIGINS }}
-
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -51,6 +43,13 @@ jobs:
 
       - name: Verify production credentials and origins
         shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          BETTER_AUTH_URL: ${{ vars.BETTER_AUTH_URL }}
+          APP_ORIGINS: ${{ vars.APP_ORIGINS }}
         run: |
           set -euo pipefail
           for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID ANTHROPIC_API_KEY BETTER_AUTH_SECRET BETTER_AUTH_URL APP_ORIGINS; do
@@ -109,9 +108,16 @@ jobs:
           secrets: |
             ANTHROPIC_API_KEY
             BETTER_AUTH_SECRET
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          BETTER_AUTH_URL: ${{ vars.BETTER_AUTH_URL }}
+          APP_ORIGINS: ${{ vars.APP_ORIGINS }}
 
       - name: Smoke-test deployed origin, authentication and CORS
         shell: bash
+        env:
+          BETTER_AUTH_URL: ${{ vars.BETTER_AUTH_URL }}
         run: |
           set -euo pipefail
           base="$(printf '%s' "$BETTER_AUTH_URL" | sed 's:/*$::')"
