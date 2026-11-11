@@ -376,3 +376,27 @@ body { font-feature-settings: "ss01" on; }
 @media (prefers-reduced-motion: reduce) {
   .eng-shell *, .eng-shell *::before, .eng-shell *::after { scroll-behavior: auto !important; }
 }
+
+/* Navigation: a clear label on every destination, with a mobile-safe dock. */
+.eng-nav { max-width: calc(100vw - 24px); box-sizing: border-box; }
+.eng-nav-item { flex-direction: column; justify-content: center; gap: 4px !important; min-width: 58px; padding: 9px 10px !important; }
+.eng-nav-label { font-size: 10px; line-height: 1.2; white-space: nowrap; }
+.eng-nav-item[aria-current="page"] { background: var(--accent-tint) !important; color: var(--accent) !important; }
+.eng-nav-checkin { flex: 0 0 auto; }
+@media (max-width: 760px) {
+  .eng-nav {
+    left: 8px !important; right: 8px !important; bottom: max(8px, env(safe-area-inset-bottom)) !important;
+    width: auto !important; max-width: none; transform: none !important;
+    border-radius: 24px !important; padding: 6px !important;
+    justify-content: space-between; gap: 2px !important;
+  }
+  .eng-nav-item { flex: 1 1 0; min-width: 0; padding: 10px 2px !important; }
+  .eng-nav-label { font-size: 10px; }
+  .eng-nav-divider { display: none; }
+  .eng-nav-checkin { width: 38px !important; height: 38px !important; }
+}
+@media (max-width: 390px) {
+  .eng-nav-item { padding: 9px 0 !important; }
+  .eng-nav-label { font-size: 9px; }
+  .eng-nav-checkin { width: 34px !important; height: 34px !important; }
+}
