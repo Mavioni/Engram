@@ -39,13 +39,11 @@ app.use("/api/*", async (c, next) => {
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
-  const allowed = new Set([
-    "http://localhost:5173",
-    "http://localhost:8787",
-    "capacitor://localhost",
-    "http://localhost",
-    ...configured,
-  ]);
+  // Never trust developer origins in production unless explicitly configured.
+  const devOrigins = c.env.ENVIRONMENT === "development"
+    ? ["http://localhost:5173", "http://localhost:8787", "capacitor://localhost", "http://localhost"]
+    : [];
+  const allowed = new Set([...devOrigins, ...configured]);
   return cors({
     origin: (origin) => allowed.has(origin) ? origin : "",
     credentials: true,
