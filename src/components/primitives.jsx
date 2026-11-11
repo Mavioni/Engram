@@ -99,7 +99,7 @@ const SectionHeader = ({ eyebrow, title, action, large }) => (
 
 // Premium nav — glass dock with active indicator, subtle CTA
 const NavBar = ({ active, onChange, items }) => (
-  <nav style={{
+  <nav className="eng-nav" aria-label="Primary navigation" style={{
     position: "absolute",
     bottom: 18,
     left: "50%",
@@ -124,6 +124,9 @@ const NavBar = ({ active, onChange, items }) => (
           key={item.id}
           onClick={() => onChange(item.id)}
           title={item.label}
+          aria-label={item.label}
+          aria-current={isActive ? "page" : undefined}
+          className="eng-nav-item"
           style={{
             display: "flex",
             alignItems: "center",
@@ -142,13 +145,13 @@ const NavBar = ({ active, onChange, items }) => (
           onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = "var(--ink-3)"; }}
         >
           <Ic size={17} />
-          {isActive && <span style={{ letterSpacing: "-0.005em" }}>{item.label}</span>}
+          <span className="eng-nav-label" style={{ letterSpacing: "-0.005em" }}>{item.label}</span>
         </button>
       );
     })}
     {/* Divider + CTA */}
-    <span style={{ width: 1, height: 22, background: "var(--line)", margin: "0 4px" }} />
-    <button title="Quick check-in" onClick={() => onChange("checkin")} style={{
+    <span className="eng-nav-divider" aria-hidden="true" style={{ width: 1, height: 22, background: "var(--line)", margin: "0 4px" }} />
+    <button className="eng-nav-checkin" aria-label="Quick mood check-in" title="Quick check-in" onClick={() => onChange("checkin")} style={{
       width: 38, height: 38, borderRadius: "50%",
       background: "var(--accent)",
       color: "white",
@@ -193,7 +196,6 @@ const MoodOrb = ({ valence = 0.5, energy = 0.5, size = 64, label, animated }) =>
   // valence 0..1, energy 0..1
   // Color: low=plum, mid=accent-soft, high=warm
   const hue = valence < 0.33 ? "var(--plum)" : valence < 0.66 ? "var(--accent-soft)" : "var(--warm)";
-  const radius = size / 2;
   const wobble = 4 + energy * 8;
   return (
     <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
