@@ -28,22 +28,22 @@ test.beforeEach(async ({ page }) => {
   })
 })
 
-test('root mounts and shows the IRIS conversation header', async ({ page }) => {
+test('root mounts and shows the Today dashboard', async ({ page }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' })
-  const irisHeader = page.locator('.display').filter({ hasText: /IRIS/i }).first()
+  const irisHeader = page.getByRole('heading', { name: /Good (morning|afternoon|evening)/i })
   await expect(irisHeader).toBeVisible({ timeout: 5_000 })
 })
 
 test('root applies the default appearance settings', async ({ page }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' })
-  await expect(page.locator('.display').filter({ hasText: /IRIS/i }).first()).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Good (morning|afternoon|evening)/i })).toBeVisible()
   await expect.poll(() => page.evaluate(() => document.documentElement.dataset.accent)).toBe('ocean')
   await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe('dark')
 })
 
 test('navigation exposes six destinations and the quick check-in action', async ({ page }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' })
-  await expect(page.locator('.display').filter({ hasText: /IRIS/i }).first()).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Good (morning|afternoon|evening)/i })).toBeVisible()
   const navButtons = page.locator('nav button')
   await expect(navButtons).toHaveCount(7)
   await expect(navButtons.filter({ has: page.locator('svg') })).toHaveCount(7)
