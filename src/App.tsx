@@ -136,7 +136,7 @@ function useTweaksFallback(defaults: Tweaks): [Tweaks, (k: keyof Tweaks, v: stri
 function Shell() {
   const useTweaks = W.useTweaks ?? useTweaksFallback
   const [tweaks, setTweak] = useTweaks<Tweaks>({ ...TWEAK_DEFAULTS })
-  const [screen, setScreen] = useState<ScreenId>('chat')
+  const [screen, setScreen] = useState<ScreenId>('dashboard')
 
   useEffect(() => {
     const root = document.documentElement
@@ -182,9 +182,10 @@ function Shell() {
 
   return (
     <div
+      className="eng-shell"
       style={{
         position: 'relative',
-        height: '100vh',
+        height: '100dvh',
         width: '100%',
         overflow: 'hidden',
         background: 'var(--bg)',
