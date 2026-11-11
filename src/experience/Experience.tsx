@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
 import { EngramGraph } from './EngramGraph'
-import { dateLabel, entryTitle, exportNotebook, freshEntry, loadEntries, MOOD_FACTORS, MOOD_NAMES, parseImport, shortText, STORAGE_KEY, type EntryKind, type MoodName, type NotebookEntry } from './model'
+import { dateLabel, entryTitle, exportNotebook, downloadRawNotebook, freshEntry, readNotebookStorage, MOOD_FACTORS, MOOD_NAMES, parseImport, shortText, STORAGE_KEY, type EntryKind, type MoodName, type NotebookEntry } from './model'
 import './experience.css'
 
 type View = 'notebook' | 'engram' | 'today' | 'iris'
@@ -36,7 +36,9 @@ function KindIcon({kind}: {kind:EntryKind}) {return <span className={`kind-icon 
 const kindLabel: Record<EntryKind,string> = {note:'Note',journal:'Journal',task:'Task',mood:'Mood'}
 
 export default function Experience() {
-  const [entries,setEntries] = useState<NotebookEntry[]>(loadEntries)
+  const [initialNotebook] = useState(readNotebookStorage)
+  const [entries,setEntries] = useState<NotebookEntry[]>(initialNotebook.entries)
+  const [storageBlocked,setStorageBlocked] = useState(Boolean(initialNotebook.error))
   const [view,setView] = useState<View>('notebook')
   const [filter,setFilter] = useState<Filter>('all')
   const [selectedId,setSelectedId] = useState<string|null>(null)
@@ -44,25 +46,33 @@ export default function Experience() {
   const [search,setSearch] = useState('')
   const [settings,setSettings] = useState(false)
   const [checkin,setCheckin] = useState(false)
-  const [storageError,setStorageError] = useState('')
+  const [storageError,setStorageError] = useState(initialNotebook.error ?? '')
   const [notice,setNotice] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
   const importRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    if (storageBlocked) return // Preserve the original unreadable bytes.
     try { localStorage.setItem(STORAGE_KEY,JSON.stringify(entries)); setStorageError('') }
     catch { setStorageError('Unable to save on this device. Export your notes and check browser storage.') }
-  },[entries])
+  },[entries,storageBlocked])
   useEffect(() => {
-    const onStorage=(e:StorageEvent)=>{if(e.key===STORAGE_KEY) setEntries(loadEntries())}
+    const onStorage=(e:StorageEvent)=>{
+      if(e.key!==STORAGE_KEY) return
+      const snapshot=readNotebookStorage()
+      if(snapshot.error){setStorageBlocked(true);setStorageError(snapshot.error);return}
+      setStorageBlocked(false)
+      setEntries(snapshot.entries)
+    }
     window.addEventListener('storage',onStorage)
     return ()=>window.removeEventListener('storage',onStorage)
   },[])
   const create = useCallback((kind:EntryKind='note') => {
+    if(storageBlocked){setNotice('Notebook is read-only until the stored data is recovered or explicitly erased.');return}
     if(kind==='mood'){setCheckin(true);return}
     const entry=freshEntry(kind)
     setEntries(prev=>[entry,...prev]);setView('notebook');setSelectedId(entry.id);setShowEditor(true);setFilter('all')
-  },[])
+  },[storageBlocked])
   useEffect(()=>{
     const keyHandler=(e:KeyboardEvent)=>{
       if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();setView('notebook');setShowEditor(false);searchRef.current?.focus()}
@@ -77,13 +87,18 @@ export default function Experience() {
     return !q || [e.title,e.body,...e.tags,e.mood||'',...(e.factors||[])].some(text=>text.toLowerCase().includes(q))
   }),[sorted,filter,search])
   const active = entries.find(e=>e.id===selectedId)??null
-  const update=(id:string,patch:Partial<NotebookEntry>)=>setEntries(prev=>prev.map(e=>e.id===id?{...e,...patch,updatedAt:new Date().toISOString()}:e))
+  const update=(id:string,patch:Partial<NotebookEntry>)=>{
+    if(storageBlocked){setNotice('Notebook is read-only until the stored data is recovered or explicitly erased.');return}
+    setEntries(prev=>prev.map(e=>e.id===id?{...e,...patch,updatedAt:new Date().toISOString()}:e))
+  }
   const remove=(id:string)=>{
+    if(storageBlocked){setNotice('Notebook is read-only until the stored data is recovered or explicitly erased.');return}
     if(!window.confirm('Delete this page from this browser? This cannot be undone.'))return
     setEntries(prev=>prev.filter(e=>e.id!==id));setSelectedId(null);setShowEditor(false)
   }
   const open=(id:string)=>{setSelectedId(id);setView('notebook');setFilter('all');setSearch('');setShowEditor(true)}
   const addMood=(mood:MoodName,intensity:number,factors:string[],body:string)=>{
+    if(storageBlocked){setNotice('Notebook is read-only until the stored data is recovered or explicitly erased.');return}
     const entry=freshEntry('mood')
     entry.mood=mood;entry.intensity=intensity;entry.factors=factors;entry.body=body
     entry.title=`Feeling ${mood.toLowerCase()}`
@@ -91,12 +106,31 @@ export default function Experience() {
   }
   const doImport=async(e:ChangeEvent<HTMLInputElement>)=>{
     const file=e.target.files?.[0];e.target.value='';if(!file)return
+    if(storageBlocked){setNotice('Export a recovery copy and erase unreadable local data before importing.');return}
     try {
       if(file.size>20_000_000)throw new Error('This backup is too large for browser import.')
       const incoming=parseImport(await file.text())
       const existing=new Set(entries.map(x=>x.id));const added=incoming.filter(x=>!existing.has(x.id))
       setEntries(prev=>[...added,...prev]);setNotice(`Imported ${added.length} page${added.length===1?'':'s'}; duplicates skipped.`);setSettings(false)
     }catch(error){setNotice(error instanceof Error?error.message:'Unable to import this file.')}
+  }
+  const eraseLocalNotebook = () => {
+    const warning = storageBlocked
+      ? 'Permanently erase unreadable Notebook data on this device? Download a recovery copy first. This cannot be undone.'
+      : 'Permanently erase every Notebook page on this device? Export a backup first if needed.'
+    if(!window.confirm(warning))return
+    try {
+      localStorage.removeItem(STORAGE_KEY)
+      setStorageBlocked(false)
+      setStorageError('')
+      setEntries([])
+      setSelectedId(null)
+      setShowEditor(false)
+      setSettings(false)
+      setNotice('Local Notebook erased.')
+    } catch {
+      setStorageError('Unable to erase local data. Check browser storage permissions.')
+    }
   }
   const overview = useMemo(()=>({
     notes:entries.filter(e=>e.kind==='note'||e.kind==='journal').length,
@@ -120,7 +154,7 @@ export default function Experience() {
     </aside>
 
     <div className="eng-main">
-      <header className="eng-topbar"><div className="top-left"><span className="top-breadcrumb">ENGRAM</span><span className="top-slash">/</span><span>{sections.find(s=>s.id===view)?.label}</span></div><div className="top-actions"><span className="save-status"><span/>Stored in this browser</span><button className="top-icon" aria-label="Settings" onClick={()=>setSettings(true)}><Icon name="settings" size={19}/></button><button className="button primary top-new" onClick={()=>create('note')}><Icon name="plus" size={17}/>New page</button></div></header>
+      <header className="eng-topbar"><div className="top-left"><span className="top-breadcrumb">ENGRAM</span><span className="top-slash">/</span><span>{sections.find(s=>s.id===view)?.label}</span></div><div className="top-actions"><span className="save-status"><span/>{storageError?'Storage unavailable':'Stored in this browser'}</span><button className="top-icon" aria-label="Settings" onClick={()=>setSettings(true)}><Icon name="settings" size={19}/></button><button className="button primary top-new" onClick={()=>create('note')}><Icon name="plus" size={17}/>New page</button></div></header>
       {storageError && <div className="storage-error" role="alert">{storageError}</div>}
       {notice && <div className="notice" role="status">{notice}<button onClick={()=>setNotice('')} aria-label="Dismiss"><Icon name="close" size={16}/></button></div>}
 
@@ -152,7 +186,7 @@ export default function Experience() {
     <nav className="eng-mobile-nav" aria-label="Mobile navigation">{sections.map(s=><button key={s.id} className={view===s.id?'current':''} aria-current={view===s.id?'page':undefined} onClick={()=>{setView(s.id);setShowEditor(false)}}><Icon name={s.icon} size={20}/><span>{s.label}</span></button>)}<button onClick={()=>setCheckin(true)}><Icon name="plus" size={20}/><span>Check in</span></button></nav>
 
     {checkin&&<MoodDialog onClose={()=>setCheckin(false)} onSave={addMood}/>}
-    {settings&&<div className="modal-scrim" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setSettings(false)}}><section className="settings-sheet" role="dialog" aria-modal="true" aria-label="Notebook settings"><div className="modal-head"><div><span className="overline">YOUR DATA / YOUR CONTROL</span><h2>Notebook settings</h2></div><button className="icon-button" aria-label="Close settings" onClick={()=>setSettings(false)}><Icon name="close"/></button></div><div className="settings-section"><h3>Local storage</h3><p>Your pages are saved automatically to this browser's local storage. They are <b>not encrypted or synced to the cloud</b>. Clearing browser data or using another device will not restore them. Export backups regularly.</p><div className="setting-count">{entries.length} pages saved on this device</div></div><div className="settings-section"><h3>Own your words</h3><p>Export a portable JSON backup of all your Notebook entries, or import an existing Engram Notebook v2 backup.</p><div className="settings-buttons"><button className="button primary" onClick={()=>exportNotebook(entries)}><Icon name="download" size={17}/>Export backup</button><button className="button subtle" onClick={()=>importRef.current?.click()}>Import backup</button><input ref={importRef} type="file" accept=".json,application/json" hidden onChange={doImport}/></div></div><div className="settings-section danger"><h3>Erase this device's notebook</h3><p>This permanently deletes the local pages in this browser only. It does not affect any server records.</p><button onClick={()=>{if(confirm('Permanently erase every Notebook page on this device? Export a backup first if needed.')){setEntries([]);setSelectedId(null);setShowEditor(false);setSettings(false);setNotice('Local Notebook erased.')}}}>Erase local Notebook</button></div><div className="settings-source">Engram · Open source under AGPL-3.0-only · <a href="https://github.com/Mavioni/Engram" target="_blank" rel="noreferrer">View source</a></div></section></div>}
+    {settings&&<div className="modal-scrim" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setSettings(false)}}><section className="settings-sheet" role="dialog" aria-modal="true" aria-label="Notebook settings"><div className="modal-head"><div><span className="overline">YOUR DATA / YOUR CONTROL</span><h2>Notebook settings</h2></div><button className="icon-button" aria-label="Close settings" onClick={()=>setSettings(false)}><Icon name="close"/></button></div><div className="settings-section"><h3>Local storage</h3><p>Your pages are saved automatically to this browser's local storage. They are <b>not encrypted or synced to the cloud</b>. Clearing browser data or using another device will not restore them. Export backups regularly.</p><div className="setting-count">{storageBlocked?'Existing saved pages could not be loaded. Original data has not been overwritten.':`${entries.length} pages saved on this device`}</div></div><div className="settings-section"><h3>Own your words</h3><p>Export a portable JSON backup of all your Notebook entries, or import an existing Engram Notebook v2 backup.</p><div className="settings-buttons">{storageBlocked?<button className="button primary" onClick={()=>{try{downloadRawNotebook();setNotice('Recovery copy downloaded.')}catch(error){setNotice(error instanceof Error?error.message:'Unable to export recovery copy.')}}}><Icon name="download" size={17}/>Download recovery copy</button>:<><button className="button primary" onClick={()=>exportNotebook(entries)}><Icon name="download" size={17}/>Export backup</button><button className="button subtle" onClick={()=>importRef.current?.click()}>Import backup</button></>}<input ref={importRef} type="file" accept=".json,application/json" hidden onChange={doImport}/></div></div><div className="settings-section danger"><h3>Erase this device's notebook</h3><p>This permanently deletes the local pages in this browser only. It does not affect any server records.</p><button onClick={eraseLocalNotebook}>Erase local Notebook</button></div><div className="settings-source">Engram · Open source under AGPL-3.0-only · <a href="https://github.com/Mavioni/Engram" target="_blank" rel="noreferrer">View source</a></div></section></div>}
   </div>
 }
 
