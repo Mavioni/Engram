@@ -12,6 +12,7 @@ import type { MiddlewareHandler, Next } from "hono";
 import { createAuth } from "./auth/better-auth";
 import { handleIris } from "./iris";
 import { memoryRoutes } from "./memory";
+import { checkinRoutes } from "./checkins";
 
 export type Env = {
   DB: D1Database;
@@ -95,6 +96,7 @@ app.post("/api/intelligence", requireAuth, handleIris);
 
 // Canonical user-owned persistent memory API.
 app.route("/api/memory", memoryRoutes(requireAuth));
+app.route("/api/checkins", checkinRoutes(requireAuth));
 
 app.get("/api/me", requireAuth, (c) => {
   return c.json({ user: c.get("user") });
