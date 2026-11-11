@@ -1,10 +1,16 @@
-name: Publish Engram Preview to GitHub Pages
+name: Publish Engram Notebook to GitHub Pages
 
 on:
   push:
     branches: [master]
     paths:
-      - 'preview/**'
+      - 'src/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - 'tests/e2e/**'
+      - 'playwright.config.ts'
       - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
@@ -14,26 +20,43 @@ permissions:
   id-token: write
 
 concurrency:
-  group: github-pages
+  group: engram-pages
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  verify-and-deploy:
+    name: Build, browser QA, publish
+    runs-on: ubuntu-24.04
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Preserve QA screenshots and traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engram-pages-visual-qa
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14
+      - uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Upload preview artifact
-        uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v4
         with:
-          path: preview
-      - name: Deploy preview
+          path: dist
+      - name: Deploy verified Notebook site
         id: deployment
         uses: actions/deploy-pages@v4
