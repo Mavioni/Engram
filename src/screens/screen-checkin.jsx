@@ -26,6 +26,21 @@ function CheckinScreen({ onNavigate }) {
   const [intensity, setIntensity] = useStateMood(0.6);
   const [factors, setFactors] = useStateMood([]);
   const [note, setNote] = useStateMood("");
+  const [saveError, setSaveError] = useStateMood("");
+  const [saving, setSaving] = useStateMood(false);
+  const saveReflection = async () => {
+    if (!mood || saving) return;
+    setSaving(true);
+    setSaveError("");
+    try {
+      if (!window.useUserStore?.getState()?.setDailyMood) throw new Error("Mood storage is unavailable.");
+      await window.useUserStore.getState().setDailyMood(mood.v);
+      // This local store currently persists the mood score only; notes and factors are not stored.
+      onNavigate("dashboard");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Could not save your check-in.");
+    } finally { setSaving(false); }
+  };
 
   const next = () => setStep(s => Math.min(3, s + 1));
   const back = () => step === 0 ? onNavigate("dashboard") : setStep(s => s - 1);
@@ -63,14 +78,15 @@ function CheckinScreen({ onNavigate }) {
         <button onClick={() => onNavigate("dashboard")} style={{ color: "var(--ink-3)", fontSize: 13, padding: "8px 14px" }}>Skip</button>
       </header>
 
-      <div className="fade-in" key={step} style={{ flex: 1, overflow: "auto", padding: "24px 40px 40px", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 1 }}>
+      <div className="fade-in eng-checkin-body" key={step} style={{ flex: 1, overflow: "auto", padding: "24px 40px 40px", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 1 }}>
         {step === 0 && <MoodPickPremium mood={mood} setMood={setMood} />}
         {step === 1 && <IntensityPremium mood={mood} intensity={intensity} setIntensity={setIntensity} />}
         {step === 2 && <FactorsPremium factors={factors} setFactors={setFactors} />}
         {step === 3 && <NotePremium note={note} setNote={setNote} mood={mood} />}
       </div>
 
-      <div style={{ padding: "16px 40px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, position: "relative", zIndex: 5, background: "linear-gradient(to top, var(--bg) 50%, transparent)" }}>
+      {saveError && <p role="alert" style={{color:"var(--plum)",textAlign:"center",margin:0}}>{saveError}</p>}
+      <div className="eng-checkin-footer" style={{ padding: "16px 40px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, position: "relative", zIndex: 5, background: "linear-gradient(to top, var(--bg) 50%, transparent)" }}>
         <div style={{ fontSize: 12, color: "var(--ink-4)", display: "flex", alignItems: "center", gap: 8 }}>
           {mood && <>
             <div style={{ width: 14, height: 14, borderRadius: "50%", background: `radial-gradient(circle at 35% 30%, color-mix(in oklab, ${mood.color} 60%, white), ${mood.color})` }} />
@@ -82,8 +98,8 @@ function CheckinScreen({ onNavigate }) {
             Continue
           </Button>
         ) : (
-          <Button variant="accent" iconRight={<IconCheck size={16} />} onClick={() => onNavigate("dashboard")}>
-            Save reflection
+          <Button variant="accent" iconRight={<IconCheck size={16} />} onClick={saveReflection} disabled={!mood || saving}>
+            {saving ? "Saving…" : "Save mood"}
           </Button>
         )}
       </div>
@@ -104,11 +120,11 @@ function MoodPickPremium({ mood, setMood }) {
         </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, maxWidth: 760, width: "100%" }}>
+      <div className="eng-mood-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, maxWidth: 760, width: "100%" }}>
         {MOODS_PREMIUM.map((m) => {
           const active = mood?.id === m.id;
           return (
-            <button key={m.id} onClick={() => setMood(m)} style={{
+            <button key={m.id} type="button" aria-label={`${m.label}: ${m.subtitle}`} aria-pressed={active} onClick={() => setMood(m)} style={{
               padding: "26px 16px 22px",
               borderRadius: 18,
               background: "var(--bg-card)",
