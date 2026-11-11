@@ -67,6 +67,10 @@ jobs:
             echo "::error::APP_ORIGINS must include https://mavioni.github.io (no /Engram path)."
             exit 1
           fi
+          if [[ "$APP_ORIGINS" == *"http://localhost"* || "$APP_ORIGINS" == *"http://127.0.0.1"* ]]; then
+            echo "::error::Production APP_ORIGINS cannot explicitly trust local development origins."
+            exit 1
+          fi
 
       - name: Install Worker dependencies
         run: |
@@ -105,6 +109,7 @@ jobs:
           vars: |
             BETTER_AUTH_URL
             APP_ORIGINS
+            ENVIRONMENT
           secrets: |
             ANTHROPIC_API_KEY
             BETTER_AUTH_SECRET
@@ -113,6 +118,7 @@ jobs:
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           BETTER_AUTH_URL: ${{ vars.BETTER_AUTH_URL }}
           APP_ORIGINS: ${{ vars.APP_ORIGINS }}
+          ENVIRONMENT: production
 
       - name: Smoke-test deployed origin, authentication and CORS
         shell: bash
@@ -153,4 +159,11 @@ jobs:
             exit 1
           fi
 
-          echo "API reachable; unauthenticated endpoint denied; session route, Pages CORS and Notebook PUT preflight respond."
+          dev_headers="$(mktemp)"
+          curl --silent --show-error --max-time 20 --output /dev/null --dump-header "$dev_headers" -H 'Origin: http://localhost:5173' "$base/api/me"
+          if tr -d '\r' < "$dev_headers" | grep -Fxiq 'access-control-allow-origin: http://localhost:5173'; then
+            echo "::error::Production must not implicitly trust development localhost origins."
+            exit 1
+          fi
+
+          echo "API reachable; unauthorized access denied; session route, Pages CORS and Notebook PUT preflight respond; developer origin rejected."
