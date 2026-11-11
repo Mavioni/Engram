@@ -49,7 +49,7 @@ app.use("/api/*", async (c, next) => {
   return cors({
     origin: (origin) => allowed.has(origin) ? origin : "",
     credentials: true,
-    allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
     maxAge: 600,
   })(c, next);
