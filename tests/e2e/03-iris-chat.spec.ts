@@ -1,77 +1,33 @@
-import { test, expect } from '@playwright/test';
+import {test, expect} from '@playwright/test'
 
-test('chat sends the conversation, preserves session ID, and explicitly opts into memory', async ({ page }) => {
-  const requests: Array<Record<string, unknown>> = [];
+test('IRIS searches only saved Notebook content without inventing answers', async ({page})=>{
+  const apiRequests:string[]=[]
+  page.on('request',request=>{if(request.url().includes('/api/'))apiRequests.push(request.url())})
+  await page.goto('/')
+  await page.getByRole('button',{name:'New page'}).click()
+  await page.getByRole('textbox',{name:'Page title'}).fill('A sunrise in Prescott')
+  await page.getByRole('textbox',{name:'Page content'}).fill('The mountains looked golden at dawn.')
+  await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'IRIS'}).click()
+  await expect(page.getByText('Local recall only · Cloud AI not connected')).toBeVisible()
+  await page.getByRole('textbox',{name:'SEARCH YOUR MEMORY'}).fill('golden')
+  await expect(page.getByRole('button',{name:/A sunrise in Prescott/})).toBeVisible()
+  await page.getByRole('textbox',{name:'SEARCH YOUR MEMORY'}).fill('unrecorded miracle')
+  await expect(page.getByText('No matching pages found. IRIS only reports what your Notebook contains.')).toBeVisible()
+  expect(apiRequests).toHaveLength(0)
+})
 
-  await page.route('**/api/auth/get-session', async (route) => {
-    const now = Date.now();
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        session: {
-          id: 'session-auth-test',
-          token: 'test-session-token',
-          userId: 'user-test-001',
-          expiresAt: new Date(now + 60 * 60 * 1000).toISOString(),
-          createdAt: new Date(now).toISOString(),
-          updatedAt: new Date(now).toISOString(),
-        },
-        user: {
-          id: 'user-test-001',
-          name: 'Engram Test',
-          email: 'engram-test@example.com',
-          emailVerified: true,
-          createdAt: new Date(now).toISOString(),
-          updatedAt: new Date(now).toISOString(),
-        },
-      }),
-    });
-  });
-
-  await page.route('**/api/intelligence', async (route) => {
-    const body = route.request().postDataJSON() as Record<string, unknown>;
-    requests.push(body);
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        content: 'Engram Intelligence response received.',
-        sessionId: 'session-test-001',
-      }),
-    });
-  });
-
-  await page.goto('/', { waitUntil: 'domcontentloaded' });
-
-  await page.getByRole('button', { name: 'IRIS' }).click();
-  const irisHeader = page.locator('.display').filter({ hasText: /IRIS/i }).first();
-  await expect(irisHeader).toBeVisible({ timeout: 5_000 });
-
-  const memoryToggle = page.getByLabel('Use saved Engram memory in this conversation');
-  await expect(memoryToggle).not.toBeChecked();
-  await memoryToggle.check();
-
-  const chatInput = page.locator('input[placeholder*="IRIS"]');
-  await chatInput.fill('Hello Engram, remember this context.');
-  await chatInput.press('Enter');
-
-  await expect(page.getByText('Engram Intelligence response received.')).toBeVisible();
-  expect(requests).toHaveLength(1);
-  expect(requests[0].useMemory).toBe(true);
-  expect(requests[0].messages).toEqual(expect.arrayContaining([
-    expect.objectContaining({
-      role: 'user',
-      content: 'Hello Engram, remember this context.',
-    }),
-  ]));
-  expect(requests[0].sessionId).toBeUndefined();
-
-  await chatInput.fill('Continue the conversation.');
-  await chatInput.press('Enter');
-  await expect(page.getByText('Engram Intelligence response received.').nth(1)).toBeVisible();
-
-  expect(requests).toHaveLength(2);
-  expect(requests[1].sessionId).toBe('session-test-001');
-  expect(requests[1].useMemory).toBe(true);
-});
+test('the Engram shows real tag-linked pages only',async({page})=>{
+  await page.goto('/')
+  await page.getByRole('button',{name:'New page'}).click()
+  await page.getByRole('textbox',{name:'Page title'}).fill('Reflection one')
+  await page.getByRole('textbox',{name:'Tags, comma separated'}).fill('growth')
+  await page.getByRole('textbox',{name:'Tags, comma separated'}).blur()
+  await page.getByRole('button',{name:'New page'}).click()
+  await page.getByRole('textbox',{name:'Page title'}).fill('Reflection two')
+  await page.getByRole('textbox',{name:'Tags, comma separated'}).fill('growth')
+  await page.getByRole('textbox',{name:'Tags, comma separated'}).blur()
+  await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'Engram'}).click()
+  const viz=page.getByLabel('Your Engram visualization')
+  await expect(viz.getByText('2',{exact:true}).first()).toBeVisible()
+  await expect(viz.getByText('1',{exact:true}).first()).toBeVisible()
+})
