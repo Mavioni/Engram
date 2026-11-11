@@ -5,7 +5,7 @@ test('Notebook is the home screen with an honest empty state', async ({ page }) 
   await expect(page.getByRole('heading', { name: /Make room for thought/i })).toBeVisible()
   await expect(page.getByText('Your notebook starts here.')).toBeVisible()
   await expect(page.getByText('Stored in this browser')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Notebook', exact: true }).first()).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: /Notebook/ })).toBeVisible()
 })
 
 test('note auto-saves on this device and survives browser reload', async ({ page }) => {
@@ -28,6 +28,6 @@ test('task completion appears in actual Today counts', async ({ page }) => {
   await page.getByRole('button', { name: 'Today', exact: true }).first().click()
   await expect(page.getByText('Finish my reading')).toBeVisible()
   await expect(page.getByText('OPEN TASKS')).toBeVisible()
-  await page.getByRole('checkbox').check()
+  await page.getByRole('checkbox').click()
   await expect(page.getByText('Finish my reading')).toHaveCount(0)
 })
