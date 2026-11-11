@@ -33,9 +33,19 @@ function CheckinScreen({ onNavigate }) {
     setSaving(true);
     setSaveError("");
     try {
-      if (!window.useUserStore?.getState()?.setDailyMood) throw new Error("Mood storage is unavailable.");
-      await window.useUserStore.getState().setDailyMood(mood.v);
-      // This local store currently persists the mood score only; notes and factors are not stored.
+      const api = window.ENGRAM_API_URL || "http://localhost:8787";
+      const response = await fetch(`${api}/api/checkins`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ moodName: mood.id, mood: mood.v, energy: mood.e, intensity, factors, note }),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Unable to save. Check your connection and sign-in.");
+      }
+      // Remote write succeeded; the local trend cache is best-effort only.
+      try { await window.useUserStore?.getState()?.setDailyMood(mood.v); } catch (error) { console.warn("Local mood cache unavailable", error); }
       onNavigate("dashboard");
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : "Could not save your check-in.");
@@ -99,7 +109,7 @@ function CheckinScreen({ onNavigate }) {
           </Button>
         ) : (
           <Button variant="accent" iconRight={<IconCheck size={16} />} onClick={saveReflection} disabled={!mood || saving}>
-            {saving ? "Saving…" : "Save mood"}
+            {saving ? "Saving…" : "Save reflection"}
           </Button>
         )}
       </div>
