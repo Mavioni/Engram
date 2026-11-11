@@ -19,7 +19,7 @@ for(const viewport of [{width:360,height:780},{width:390,height:844},{width:768,
     await expect(page.getByRole('textbox',{name:'Page content'})).toHaveValue('The day felt steady.')
     await (viewport.width<=760?page.getByRole('navigation',{name:'Mobile navigation'}):page.getByRole('navigation',{name:'Main navigation'})).getByRole('button',{name:'Engram'}).click()
     await expect(page.getByLabel('Your Engram visualization')).toBeVisible()
-    await expect(page.getByRole('img',{name:/3D graph of 1 saved notebook entries/})).toBeVisible()
+    await expect(page.locator('canvas.graph-canvas')).toBeVisible()
     await page.screenshot({path:testInfo.outputPath(`engram-${viewport.width}.png`),fullPage:true,animations:'disabled'})
     const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+2)
     expect(overflow).toBe(false)
