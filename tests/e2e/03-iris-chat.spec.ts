@@ -44,6 +44,7 @@ test('chat sends the conversation, preserves session ID, and explicitly opts int
 
   await page.goto('/', { waitUntil: 'domcontentloaded' });
 
+  await page.getByRole('button', { name: 'IRIS' }).click();
   const irisHeader = page.locator('.display').filter({ hasText: /IRIS/i }).first();
   await expect(irisHeader).toBeVisible({ timeout: 5_000 });
 
