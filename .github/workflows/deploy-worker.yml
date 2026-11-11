@@ -1,16 +1,12 @@
-# Engram — Cloudflare Worker deploy
-#
-# Operator must add these GitHub repo secrets before first run:
-# CLOUDFLARE_API_TOKEN (workers:edit + d1:edit scope), CLOUDFLARE_ACCOUNT_ID,
-# ANTHROPIC_API_KEY, BETTER_AUTH_SECRET. Use `wrangler secret put` once
-# locally to seed the Worker, then this workflow keeps deploys in sync.
-# App-Store/Play-Store mobile-build workflows are separate (P1, next dispatch).
-
+# Engram — production Cloudflare Worker deployment.
+# This workflow operates on the actual default branch (master).
+# Required secrets and environment variables are documented in
+# docs/operations/CLOUD_DEPLOYMENT.md. Nothing is deployed without them.
 name: Deploy Worker
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'server/**'
       - '.github/workflows/deploy-worker.yml'
@@ -20,68 +16,154 @@ concurrency:
   group: deploy-worker-${{ github.ref }}
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
-    name: Deploy to Cloudflare
+    name: Validate, migrate, deploy and smoke-test API
     runs-on: ubuntu-24.04
     environment: production
-    timeout-minutes: 15
-
-    permissions:
-      contents: read
+    timeout-minutes: 20
 
     defaults:
       run:
         working-directory: server
 
     steps:
-      - name: Checkout
+      - name: Check out source
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: server/package-lock.json
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
+      - name: Verify production credentials and origins
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          BETTER_AUTH_URL: ${{ vars.BETTER_AUTH_URL }}
+          APP_ORIGINS: ${{ vars.APP_ORIGINS }}
         run: |
-          if [ -f package-lock.json ]; then
+          set -euo pipefail
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID ANTHROPIC_API_KEY BETTER_AUTH_SECRET BETTER_AUTH_URL APP_ORIGINS; do
+            if [[ -z "$(printenv "$name")" ]]; then
+              echo "::error::Missing production secret or variable: $name. See docs/operations/CLOUD_DEPLOYMENT.md."
+              exit 1
+            fi
+          done
+
+          if [[ "$BETTER_AUTH_URL" != https://* || "$BETTER_AUTH_URL" == *"<"* ]]; then
+            echo "::error::BETTER_AUTH_URL must be an actual HTTPS API origin."
+            exit 1
+          fi
+          if [[ ",$APP_ORIGINS," != *",https://mavioni.github.io,"* ]]; then
+            echo "::error::APP_ORIGINS must include https://mavioni.github.io (no /Engram path)."
+            exit 1
+          fi
+          if [[ "$APP_ORIGINS" == *"http://localhost"* || "$APP_ORIGINS" == *"http://127.0.0.1"* ]]; then
+            echo "::error::Production APP_ORIGINS cannot explicitly trust local development origins."
+            exit 1
+          fi
+
+      - name: Install Worker dependencies
+        run: |
+          if [[ -f package-lock.json ]]; then
             npm ci
           else
-            echo "::warning::server/package-lock.json missing — falling back to npm install. Commit a lockfile to enable reproducible builds."
             npm install --no-audit --no-fund
           fi
 
-      - name: Detect D1 migrations
-        id: migrations
+      - name: Typecheck Worker
+        run: npm run typecheck
+
+      - name: Require database migrations
+        shell: bash
         run: |
-          if [ -d migrations ] && [ -n "$(ls -A migrations 2>/dev/null)" ]; then
-            echo "present=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "present=false" >> "$GITHUB_OUTPUT"
+          if [[ ! -d src/db/migrations ]] || ! compgen -G 'src/db/migrations/*.sql' > /dev/null; then
+            echo "::error::No migrations found in server/src/db/migrations."
+            exit 1
           fi
 
-      - name: Apply D1 migrations
-        if: steps.migrations.outputs.present == 'true'
+      - name: Apply remote D1 migrations
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: server
-          command: d1 migrations apply engram --remote --persist-to ./.wrangler/state
+          command: d1 migrations apply engram --remote
 
-      - name: Deploy Worker
+      - name: Deploy Worker with production configuration
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: server
           command: deploy
+          vars: |
+            BETTER_AUTH_URL
+            APP_ORIGINS
+            ENVIRONMENT
           secrets: |
             ANTHROPIC_API_KEY
             BETTER_AUTH_SECRET
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          BETTER_AUTH_URL: ${{ vars.BETTER_AUTH_URL }}
+          APP_ORIGINS: ${{ vars.APP_ORIGINS }}
+          ENVIRONMENT: production
+
+      - name: Smoke-test deployed origin, authentication and CORS
+        shell: bash
+        env:
+          BETTER_AUTH_URL: ${{ vars.BETTER_AUTH_URL }}
+        run: |
+          set -euo pipefail
+          base="$(printf '%s' "$BETTER_AUTH_URL" | sed 's:/*$::')"
+
+          curl --fail --silent --show-error --max-time 20 "$base/" |
+            node -e 'let data="";process.stdin.on("data",d=>data+=d);process.stdin.on("end",()=>{const response=JSON.parse(data);if(response.ok!==true||response.service!=="engram-api")process.exit(1)})'
+
+          headers="$(mktemp)"
+          status="$(curl --silent --show-error --max-time 20 --output /dev/null --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: https://mavioni.github.io' "$base/api/me")"
+          if [[ "$status" != 401 ]]; then
+            echo "::error::Unauthenticated /api/me must return 401; got $status."
+            exit 1
+          fi
+          if ! tr -d '\r' < "$headers" | grep -Fxiq 'access-control-allow-origin: https://mavioni.github.io'; then
+            echo "::error::The Engram Pages origin is missing from API CORS headers."
+            exit 1
+          fi
+
+          auth_status="$(curl --silent --show-error --max-time 20 --output /dev/null --write-out '%{http_code}' "$base/api/auth/get-session")"
+          if [[ "$auth_status" != 200 ]]; then
+            echo "::error::Better Auth session route returned $auth_status instead of 200."
+            exit 1
+          fi
+
+          preflight_headers="$(mktemp)"
+          preflight_status="$(curl --silent --show-error --max-time 20 --output /dev/null --dump-header "$preflight_headers" --write-out '%{http_code}' -X OPTIONS -H 'Origin: https://mavioni.github.io' -H 'Access-Control-Request-Method: PUT' -H 'Access-Control-Request-Headers: Content-Type' "$base/api/notebook/test-entry-123")"
+          if [[ "$preflight_status" != 200 && "$preflight_status" != 204 ]]; then
+            echo "::error::Notebook PUT preflight returned $preflight_status."
+            exit 1
+          fi
+          if ! tr -d '\r' < "$preflight_headers" | grep -i '^access-control-allow-methods:' | grep -Fq 'PUT'; then
+            echo "::error::Notebook PUT is missing from CORS preflight allow-methods."
+            exit 1
+          fi
+
+          dev_headers="$(mktemp)"
+          curl --silent --show-error --max-time 20 --output /dev/null --dump-header "$dev_headers" -H 'Origin: http://localhost:5173' "$base/api/me"
+          if tr -d '\r' < "$dev_headers" | grep -Fxiq 'access-control-allow-origin: http://localhost:5173'; then
+            echo "::error::Production must not implicitly trust development localhost origins."
+            exit 1
+          fi
+
+          echo "API reachable; unauthorized access denied; session route, Pages CORS and Notebook PUT preflight respond; developer origin rejected."

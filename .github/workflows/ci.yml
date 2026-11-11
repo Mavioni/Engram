@@ -52,3 +52,7 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npm run typecheck
+      - name: Verify every D1 migration against a fresh local database
+        run: npx wrangler d1 migrations apply engram --local --persist-to ./.wrangler/state
+      - name: Verify Notebook table exists after migrations
+        run: npx wrangler d1 execute engram --local --persist-to ./.wrangler/state --command "SELECT COUNT(*) FROM notebook_entries"
