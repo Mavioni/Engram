@@ -136,4 +136,15 @@ jobs:
             exit 1
           fi
 
-          echo "API reachable; unauthenticated endpoint denied; session route and Pages CORS respond."
+          preflight_headers="$(mktemp)"
+          preflight_status="$(curl --silent --show-error --max-time 20 --output /dev/null --dump-header "$preflight_headers" --write-out '%{http_code}' -X OPTIONS -H 'Origin: https://mavioni.github.io' -H 'Access-Control-Request-Method: PUT' -H 'Access-Control-Request-Headers: Content-Type' "$base/api/notebook/test-entry-123")"
+          if [[ "$preflight_status" != 200 && "$preflight_status" != 204 ]]; then
+            echo "::error::Notebook PUT preflight returned $preflight_status."
+            exit 1
+          fi
+          if ! tr -d '\r' < "$preflight_headers" | grep -i '^access-control-allow-methods:' | grep -Fq 'PUT'; then
+            echo "::error::Notebook PUT is missing from CORS preflight allow-methods."
+            exit 1
+          fi
+
+          echo "API reachable; unauthenticated endpoint denied; session route, Pages CORS and Notebook PUT preflight respond."
