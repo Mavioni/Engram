@@ -9,10 +9,11 @@ function DashboardScreen({ onNavigate }) {
 
   const now = new Date();
   const stamp = formatGreetingStamp(now);
-  const greeting = `Good evening${displayName ? ", " + displayName : ""}.`;
+  const hour = now.getHours();
+  const greeting = `Good ${hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening"}${displayName ? ", " + displayName : ""}.`;
 
   return (
-    <div className="scrollbar-hide" style={{ height: "100%", overflow: "auto", padding: "32px 44px 120px" }}>
+    <div className="scrollbar-hide eng-dashboard" style={{ height: "100%", overflow: "auto", padding: "32px 44px 120px" }}>
       {/* Greeting */}
       <div className="fade-in" style={{ marginBottom: 36, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
         <div>
@@ -46,7 +47,7 @@ function DashboardScreen({ onNavigate }) {
       {/* Today path */}
       <div style={{ marginTop: 40 }}>
         <SectionHeader title="A path through tonight" eyebrow="Curated for you" />
-        <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+        <div className="stagger eng-path-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
           <PathCard
             n="01"
             icon={<IconHeart size={20} />}
@@ -78,13 +79,13 @@ function DashboardScreen({ onNavigate }) {
       </div>
 
       {/* Two-up: Mood trend + IRIS observation */}
-      <div style={{ marginTop: 40, display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16 }}>
+      <div className="eng-secondary-grid" style={{ marginTop: 40, display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16 }}>
         <MoodTrendCard onClick={() => onNavigate("insights")} points={last7DaysMoods} />
         <IRISObservationCard onClick={() => onNavigate("chat")} hasInsights={hasInsights} />
       </div>
 
       {/* Three-up: Continuity, Recent journal, Practice library */}
-      <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", gap: 16 }}>
+      <div className="eng-tertiary-grid" style={{ marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", gap: 16 }}>
         <StreakCard />
         <ReflectionsCompact onNavigate={onNavigate} />
         <PracticeShelf onClick={() => onNavigate("meditation")} />
@@ -93,7 +94,7 @@ function DashboardScreen({ onNavigate }) {
       {/* This week */}
       <div style={{ marginTop: 40 }}>
         <SectionHeader title="This week, by the numbers" eyebrow="Last 7 days" action={<Pill onClick={() => onNavigate("insights")}>Full insights →</Pill>} />
-        <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+        <div className="stagger eng-stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
           <StatCard label="Check-ins" value={hasInsights ? "—" : "—"} delta="" />
           <StatCard label="Journal words" value="—" delta="" />
           <StatCard label="Minutes practiced" value="—" delta="" />
@@ -113,7 +114,7 @@ function formatGreetingStamp(date) {
 
 function PlayerCardHero({ onClick, assessmentComplete }) {
   return (
-    <div onClick={onClick} className="scale-in" style={{
+    <div onClick={onClick} className="scale-in eng-hero" style={{
       position: "relative",
       borderRadius: "var(--r-2xl)",
       overflow: "hidden",
@@ -202,7 +203,7 @@ function PlayerCardHero({ onClick, assessmentComplete }) {
         </div>
       </div>
 
-      <SacredMark />
+      <div className="eng-sacred-mark"><SacredMark /></div>
     </div>
   );
 }
