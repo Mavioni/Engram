@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react'
 import { type NotebookEntry, entryTitle, shortText, dateLabel } from './model'
 
 type Point = { x: number; y: number; z: number; entry: NotebookEntry }
@@ -101,10 +101,10 @@ export function EngramGraph({ entries, onOpen }: Props) {
     return () => { running=false;cancelAnimationFrame(frame) }
   }, [points, links, selected])
 
-  const pointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+  const pointerDown = (e: PointerEvent<HTMLCanvasElement>) => {
     drag.current={x:e.clientX,y:e.clientY,moved:false};e.currentTarget.setPointerCapture(e.pointerId)
   }
-  const pointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+  const pointerMove = (e: PointerEvent<HTMLCanvasElement>) => {
     if(!drag.current) return
     const dx=e.clientX-drag.current.x,dy=e.clientY-drag.current.y
     if(Math.abs(dx)+Math.abs(dy)>2) drag.current.moved=true
@@ -112,7 +112,7 @@ export function EngramGraph({ entries, onOpen }: Props) {
     rotation.current.x=Math.max(-1.3,Math.min(1.3,rotation.current.x+dy*.008))
     drag.current.x=e.clientX;drag.current.y=e.clientY
   }
-  const pointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+  const pointerUp = (e: PointerEvent<HTMLCanvasElement>) => {
     if(!drag.current) return
     const moved=drag.current.moved;drag.current=null
     if (moved) return
@@ -121,7 +121,7 @@ export function EngramGraph({ entries, onOpen }: Props) {
     const target=[...rendered.current].reverse().find(p=>Math.hypot(p.x-x,p.y-y)<Math.max(17,p.size*2))
     setSelected(target?.entry.id ?? null)
   }
-  const wheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
+  const wheel = (e: WheelEvent<HTMLCanvasElement>) => {
     rotation.current.zoom=Math.max(.55,Math.min(1.55,rotation.current.zoom-e.deltaY*.001))
   }
 
