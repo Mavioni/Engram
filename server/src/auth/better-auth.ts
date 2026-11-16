@@ -45,11 +45,11 @@ export function createAuth(env: Env) {
       },
     },
 
+    // Developer origins must never be trusted implicitly by a production Worker.
     trustedOrigins: [
-      "http://localhost:5173",
-      "http://localhost:8787",
-      "capacitor://localhost",
-      "http://localhost",
+      ...(env.ENVIRONMENT === "development"
+        ? ["http://localhost:5173", "http://localhost:8787", "capacitor://localhost", "http://localhost"]
+        : []),
       ...(env.APP_ORIGINS ?? "").split(",").map((origin) => origin.trim()).filter(Boolean),
     ],
   });
