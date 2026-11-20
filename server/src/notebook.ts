@@ -49,7 +49,7 @@ export function notebookRoutes(requireAuth: MiddlewareHandler<AppEnv>) {
     let afterTime: number | null = null;
     let afterId: string | null = null;
     if (cursor !== undefined) {
-      const match = /^(\\d{1,16}):([\\w-]{8,120})$/.exec(cursor);
+      const match = /^(\d{1,16}):([\w-]{8,120})$/.exec(cursor);
       if (!match) return c.json({ error: "Invalid pagination cursor" }, 400);
       afterTime = Number(match[1]);
       afterId = match[2];
