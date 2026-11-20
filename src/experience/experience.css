@@ -249,3 +249,129 @@ button:disabled{opacity:.48;cursor:not-allowed}
 }
 @media(max-width:370px){.top-breadcrumb{display:none}.top-slash{display:none}.top-icon{display:none}.mood-choice-grid{grid-template-columns:repeat(2,1fr)}.graph-stage-top{left:13px;right:13px}.graph-live{font-size:8px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+/* Engram Nocturne — premium dark treatment based on supplied EasyNote screenshots.
+   Presentation-only: retains Notebook, Today, Engram graph, Iris and existing data flows. */
+:root{
+  color-scheme:dark;
+  --en-paper:#0b0b14;--en-white:#171725;--en-ink:#f8f5ff;--en-sub:#b5b3c4;
+  --en-soft:#9997ae;--en-line:#ffffff20;--en-lav:#5551ff;--en-lav-soft:#282149;
+  --en-sidebar:#0c0c17;--en-sidebar-2:#17172a;
+}
+html,body,#root{background:#0b0b14;color:#f8f5ff}
+.eng-app{
+  color:#f8f5ff;
+  background:radial-gradient(ellipse at 2% 8%,#202b7b8c,transparent 45%),
+             radial-gradient(ellipse at 100% 15%,#7c612a3d,transparent 43%),
+             radial-gradient(ellipse at 80% 95%,#3b225c4f,transparent 55%),#0b0b14;
+}
+.eng-main,.notebook-list,.notebook-editor,.page-view{
+  background:transparent;color:#f8f5ff;
+}
+.eng-sidebar{
+  background:linear-gradient(165deg,#151b3b 0%,#10101f 47%,#0b0b15 100%);
+  border-right:1px solid #ffffff1c;
+}
+.eng-topbar{
+  background:#11111dc9;border-color:#ffffff1a;
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+}
+.top-left,.top-breadcrumb{color:#d3d0e2}
+.top-slash,.save-status,.top-icon,.icon-button{color:#a9a7bb}
+.brand b,.notebook-list h1,.page-heading h1,.editor-welcome h2,
+.today-card h2,.iris-presence h2,.settings-sheet h2,.mood-sheet h2{
+  color:#fff9f5;
+}
+.notebook-list h1,.page-heading h1,.editor-welcome h2,
+.today-card h2,.iris-presence h2{
+  font-family:Georgia,"Iowan Old Style","Palatino Linotype",serif;
+  font-weight:400;letter-spacing:-.045em;
+}
+.notebook-list-head p,.page-heading p,.editor-welcome p,
+.today-card p,.iris-presence p,.iris-search p{color:#c1bdcd}
+.overline,.sidebar-caption{color:#aeb8d8;letter-spacing:.18em}
+.soft-period,.brand-period{color:#e4b652}
+.button.primary,.eng-mobile-nav button.current{
+  background:linear-gradient(115deg,#1734cc 0%,#4243ff 48%,#a445d4 100%);
+  color:white;border:1px solid #c2b4ff66;
+  box-shadow:0 12px 32px #242dfb35,inset 0 1px #ffffff3d;
+}
+.button.primary:hover{background:linear-gradient(115deg,#2649e3,#6153ff,#ae52df)}
+.button.subtle,.top-icon:hover,.icon-button:hover{
+  background:#ffffff10;color:#f3efff;border-color:#ffffff25;
+}
+.side-links button.current{
+  background:linear-gradient(105deg,#1c3cce,#7541c8);
+  box-shadow:0 8px 26px #2334d83a,inset 0 1px #ffffff30;color:white;
+}
+.side-links button:hover,.side-captures button:hover,.side-settings:hover{background:#ffffff12}
+.sidebar-privacy,.notebook-search,.iris-query,.filters button.chosen,
+.entry-row,.today-card,.iris-presence,.iris-search,.graph-detail,
+.graph-stage,.metric-grid>div,.settings-sheet,.mood-sheet,
+.editor-welcome,.editor-inner,.settings-section{
+  color:#f8f5ff;
+}
+.sidebar-privacy,.today-card,.iris-presence,.iris-search,.graph-detail,
+.metric-grid>div,.settings-sheet,.mood-sheet{
+  background:linear-gradient(135deg,#ffffff13,#ffffff06 55%,#45306316);
+  border:1px solid #ffffff27;
+  box-shadow:inset 0 1px #ffffff17,0 16px 46px #00000022;
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+.notebook-list{border-color:#ffffff1a}
+.notebook-search,.iris-query{
+  background:#0c0d1a9c;border:1px solid #ffffff29;border-radius:19px;
+}
+.notebook-search input,.iris-query input{color:#f7f4ff}
+.notebook-search input::placeholder,.iris-query input::placeholder{color:#aaa6bc}
+.notebook-search kbd{background:#ffffff12;border-color:#ffffff1b;color:#c4c1d1}
+.filters button{color:#c3bed4}
+.filters button.chosen{background:#3c36a95c;color:white;border-color:#9990ff5c}
+.filters button:hover{background:#ffffff13}
+.entries-heading,.entry-row small,.entry-row time{color:#b6b1c7}
+.entry-row{border-color:#ffffff16}
+.entry-row:hover,.entry-row.active,.entry-row.selected{background:#ffffff12}
+.editor-inner input,.editor-inner textarea,.settings-sheet input,.mood-sheet textarea{
+  color:#f8f5ff;background:transparent;
+}
+.editor-inner input::placeholder,.editor-inner textarea::placeholder,
+.settings-sheet input::placeholder,.mood-sheet textarea::placeholder{color:#9993aa}
+.settings-sheet input,.mood-sheet textarea{border-color:#ffffff30}
+.editor-title{font-family:Georgia,"Iowan Old Style",serif;font-weight:400}
+.page-note,.muted-empty,.editor-footnote{color:#aaa6ba}
+.metric-grid strong{color:#fffaf4;font-family:Georgia,"Iowan Old Style",serif;font-weight:400}
+.privacy-dot,.save-status span{background:#e1b64c}
+.mood-choice-grid button,.factor-grid button{
+  background:#151622;border:1px solid #ffffff26;color:#e6e0f2;
+}
+.mood-choice-grid button.chosen,.factor-grid button.chosen{
+  background:#413b9159;border-color:#dfbd72;box-shadow:0 0 0 2px #dfbd7230;
+}
+.range-label,.mood-note-label{color:#ddd6ed}
+.range-label input{accent-color:#7561fa}
+.modal-scrim{background:#03040acb;backdrop-filter:blur(12px)}
+.settings-section{border-color:#ffffff20}
+.settings-source,.settings-section p{color:#bcb6cb}
+.settings-section a{color:#c2b2ff}
+.eng-mobile-nav{display:none}
+@media(max-width:760px){
+  .eng-topbar{background:#0e1020b8}
+  .eng-mobile-nav{
+    display:flex;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));
+    height:72px;padding:7px;gap:3px;border-radius:25px;
+    background:#090911ed;border:1px solid #ffffff45;
+    box-shadow:0 12px 36px #0009,inset 0 1px #ffffff1e;
+    backdrop-filter:blur(25px);-webkit-backdrop-filter:blur(25px);
+  }
+  .eng-mobile-nav button{height:100%;border-radius:19px;color:#c6c1d6;gap:4px}
+  .eng-mobile-nav button.current{color:#fff}
+  .notebook-list-head{padding-top:38px}
+  .notebook-list h1,.page-heading h1{font-size:clamp(43px,10.5vw,60px)}
+  .notebook-layout,.page-view{padding-bottom:24px}
+  .page-view{background:transparent}
+  .metric-grid>div{border-radius:21px}
+  .settings-sheet,.mood-sheet{background:linear-gradient(140deg,#1b1c37,#10101e)}
+}
+@media(prefers-reduced-transparency:reduce){
+  .eng-topbar,.eng-mobile-nav,.settings-sheet,.mood-sheet{backdrop-filter:none;-webkit-backdrop-filter:none}
+}
