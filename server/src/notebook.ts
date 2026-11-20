@@ -44,11 +44,35 @@ export function notebookRoutes(requireAuth: MiddlewareHandler<AppEnv>) {
 
   app.get("/", async c => {
     const raw = Number(c.req.query("limit") ?? 100);
-    const limit = Number.isInteger(raw) ? Math.min(Math.max(raw,1),200) : 100;
-    const result = await c.env.DB.prepare(
-      "SELECT * FROM notebook_entries WHERE owner_user_id = ? ORDER BY updated_at DESC, id ASC LIMIT ?"
-    ).bind(c.get("user").id,limit).all<Row>();
-    return c.json({ entries: (result.results ?? []).map(serialize), limit, partial: (result.results ?? []).length >= limit });
+    const limit = Number.isInteger(raw) ? Math.min(Math.max(raw, 1), 200) : 100;
+    const cursor = c.req.query("cursor");
+    let afterTime: number | null = null;
+    let afterId: string | null = null;
+    if (cursor !== undefined) {
+      const match = /^(\d{1,16}):([\w-]{8,120})$/.exec(cursor);
+      if (!match) return c.json({ error: "Invalid pagination cursor" }, 400);
+      afterTime = Number(match[1]);
+      afterId = match[2];
+      if (!Number.isSafeInteger(afterTime)) return c.json({ error: "Invalid pagination cursor" }, 400);
+    }
+    const owner = c.get("user").id;
+    const result = afterTime === null
+      ? await c.env.DB.prepare(
+          "SELECT * FROM notebook_entries WHERE owner_user_id = ? ORDER BY updated_at DESC, id ASC LIMIT ?"
+        ).bind(owner, limit + 1).all<Row>()
+      : await c.env.DB.prepare(
+          "SELECT * FROM notebook_entries WHERE owner_user_id = ? AND (updated_at < ? OR (updated_at = ? AND id > ?)) ORDER BY updated_at DESC, id ASC LIMIT ?"
+        ).bind(owner, afterTime, afterTime, afterId, limit + 1).all<Row>();
+    const rows = result.results ?? [];
+    const partial = rows.length > limit;
+    const page = rows.slice(0, limit);
+    const last = page[page.length - 1];
+    return c.json({
+      entries: page.map(serialize),
+      limit,
+      partial,
+      nextCursor: partial && last ? `${last.updated_at}:${last.id}` : null,
+    });
   });
 
   app.get("/:id", async c => {
