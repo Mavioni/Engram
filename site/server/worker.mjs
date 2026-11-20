@@ -1,3 +1,5 @@
+import {handleMemoryMcp} from './memory-mcp.mjs';
+
 const PAGE_SIZE = 64;
 const MAX_MOMENTS = 5000;
 const MAX_BODY_BYTES = 8 * 1024 * 1024;
@@ -27,8 +29,8 @@ function accountFor(request) {
   return {id, label: name || email || 'Your account'};
 }
 
-async function readBody(request) {
-  if (!request.body || Number(request.headers.get('Content-Length')) > MAX_BODY_BYTES) {
+async function readBody(request, limit = MAX_BODY_BYTES) {
+  if (!request.body || Number(request.headers.get('Content-Length')) > limit) {
     throw new RangeError('This change is too large. Import a smaller backup.');
   }
   const reader = request.body.getReader();
@@ -39,7 +41,7 @@ async function readBody(request) {
     const {value, done} = await reader.read();
     if (done) break;
     size += value.byteLength;
-    if (size > MAX_BODY_BYTES) {
+    if (size > limit) {
       await reader.cancel();
       throw new RangeError('This change is too large. Import a smaller backup.');
     }
@@ -129,6 +131,7 @@ async function writeChange(db, owner, change) {
 export function createNotebookWorker(assets, validateEntry) {
   return {async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === '/mcp') return handleMemoryMcp(request, env, accountFor(request), url.origin, apiJson, readBody);
     if (url.pathname !== '/api/notebook') {
       const name = url.pathname === '/' ? '/index.html' : url.pathname;
       const asset = Object.hasOwn(assets, name) && assets[name];

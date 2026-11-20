@@ -22,6 +22,7 @@
         <a href="#timeline" data-view="timeline" class="nav-item"><span data-icon="timeline"></span><span>Timeline</span><span class="nav-indicator"></span></a>
         <a href="#insights" data-view="insights" class="nav-item"><span data-icon="chart"></span><span>Insights</span><span class="nav-indicator"></span></a>
         <a href="#memory" data-view="memory" class="nav-item"><span data-icon="network"></span><span>Memory</span><span class="nav-indicator"></span></a>
+        <a href="#chat" data-view="chat" class="nav-item"><span data-icon="chat"></span><span>Chat</span><span class="nav-indicator"></span></a>
       </nav>
       <div class="sidebar-bottom">
         <button class="pause-card" data-action="breathe"><span class="pause-art" aria-hidden="true"><i></i><i></i><i></i><i></i></span><strong>Make a little space.</strong><span>A quiet minute, just for you.</span><span class="pause-link">Take a breath <span data-icon="arrow"></span></span></button>
@@ -86,6 +87,42 @@
           <div id="insights-content"></div>
         </section>
         <section id="view-memory" class="view" aria-labelledby="memory-title" hidden><div class="page-intro compact-intro"><p class="eyebrow">THE CONNECTIONS YOU KEEP</p><h1 id="memory-title">A constellation<br>of <em>you.</em></h1><p>Each point is a moment. Shared factors draw them together.</p></div><section class="graph-card"><div class="graph-toolbar"><span><span class="live-dot"></span> <span id="graph-summary">Your memory</span></span><div><button id="toggle-motion" class="graph-control">Pause motion</button><button id="reset-graph" class="icon-button" aria-label="Reset memory view" data-icon="reset"></button></div></div><div class="graph-container"><canvas id="memory-canvas" aria-label="Three-dimensional memory visualization. The list below provides the same moments and their connections."></canvas><div id="graph-empty" class="graph-empty"><span data-icon="network"></span><h2>Every story begins somewhere.</h2><p>Keep a moment in your notebook.<br>Connections appear when moments share a factor.</p><button class="button button-sage" data-action="new">Keep your first moment <span data-icon="arrow"></span></button></div><div id="graph-tooltip" class="graph-tooltip" hidden></div></div><div class="graph-footer"><span><span class="legend-node"></span> A moment</span><span><span class="legend-line"></span> A shared factor</span><span class="graph-hint">Drag to explore · Select a point to read</span></div></section><section class="memory-list-section"><div class="section-heading"><h2>Your connected moments</h2><span class="quiet-label">The same story, in words</span></div><div id="memory-list" class="memory-list"></div><button type="button" id="memory-more" class="button button-dark more-records" hidden>Show more moments</button></section></section>
+        <section id="view-chat" class="view memory-chat" aria-labelledby="chat-title" hidden>
+          <div class="page-intro compact-intro chat-intro">
+            <h1 id="chat-title">Memory chat<span>.</span></h1>
+            <p>Ask about your journal, check-ins, and plans.</p>
+            <div class="chat-iris" aria-hidden="true"><i></i><i></i><i></i><b></b></div>
+          </div>
+          <section id="chat-gate" class="card view-gate chat-gate" aria-labelledby="chat-gate-title">
+            <h2 id="chat-gate-title">Opening your notebook…</h2>
+            <div>
+              <a id="chat-signin" class="button button-dark" href="/signin-with-chatgpt?return_to=%2F%23chat" target="_top" hidden>Sign in with ChatGPT</a>
+              <button id="chat-retry" type="button" class="button button-sage" data-action="retry" hidden>Try again</button>
+              <button id="chat-example" type="button" class="text-button" data-action="demo" hidden>Explore an example</button>
+            </div>
+          </section>
+          <div id="chat-interface" hidden>
+            <p id="chat-link-status" role="status"></p>
+            <section class="card chat-room" aria-label="Conversation">
+              <header class="chat-room-head">
+                <div><h2>Engram</h2><p>Notebook search</p></div>
+                <button class="text-button" type="button" id="chat-clear" hidden>Clear chat</button>
+              </header>
+              <div id="chat-starters" class="chat-starters" aria-label="Example questions"></div>
+              <div id="chat-log" class="chat-log" role="log" aria-label="Messages" tabindex="0"></div>
+              <form id="chat-form" class="chat-form">
+                <label class="sr-only" for="chat-question">Ask about your notebook</label>
+                <textarea id="chat-question" rows="2" maxlength="400" placeholder="When did I last write about reading?" required></textarea>
+                <button type="submit" class="button button-sage">Send <span data-icon="arrow"></span></button>
+              </form>
+            </section>
+          </div>
+          <details id="chat-connection" class="card chat-connection" hidden>
+            <summary>Use Engram in ChatGPT</summary>
+            <p>In ChatGPT, open your personal plugins, connect Engram, then ask it to search your notebook. When you invoke Engram there, matching notebook excerpts can appear in that ChatGPT conversation.</p>
+            <a class="text-button" href="https://chatgpt.com/" target="_blank" rel="noreferrer">Open ChatGPT <span data-icon="arrow-up"></span></a>
+          </details>
+        </section>
         <footer class="workspace-footer"><span class="footer-mark" data-icon="iris"></span><span>Your life, in perspective.</span><button data-action="settings">Your data, your space <span data-icon="arrow-up"></span></button><a href="https://github.com/Mavioni/Engram" target="_blank" rel="noreferrer">Source code</a></footer>
       </main>
     </div>

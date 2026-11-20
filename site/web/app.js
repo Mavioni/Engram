@@ -1,6 +1,7 @@
 import { STORAGE_KEY, DRAFT_KEY, MOODS, FACTORS, localDate, dateObject, validDate, normalizeTags, validateEntry, parseNotebook, mergeEntries, notebookJSON, entryTitle, sortedEntries, filterEntries, weekData, connections } from './model.js';
 import { loadCloudNotebook, saveCloudNotebook } from './account.js';
 import { createWorkspace } from './workspace.js';
+import { createMemoryChat } from './memory-chat.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -21,6 +22,7 @@ const icons = {
   timeline:'<path d="M7 3v18M13 5h7M13 12h7M13 19h7"/><circle cx="7" cy="5" r="2"/><circle cx="7" cy="12" r="2"/><circle cx="7" cy="19" r="2"/>',
   left:'<path d="m15 18-6-6 6-6"/>',
   right:'<path d="m9 6 6 6-6 6"/>',
+  chat:'<path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-5 4V6ZM8 9h8m-8 3h5"/>',
   search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',
   sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>',
   sparkles:'<path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3ZM21 2v4m-2-2h4"/>',
@@ -129,6 +131,7 @@ function resetAccountView() {
   personalDraft = null; state.noteId = null; state.demo = []; restoreDraft(null);
   graph.entries = []; graph.edges = []; graph.nodes = []; graph.projected = []; graph.hovered = -1;
   workspace.reset();
+  memoryChat.reset();
   noteLimit = memoryLimit = pageSize;
   for (const selector of ['#memory-list', '#notes-list', '#week-dots', '#planner-content', '#insights-content', '#today-plans']) $(selector).replaceChildren();
   $('#import-file').value = ''; drawGraph();
@@ -353,6 +356,8 @@ function makeDemoEntries() {
 }
 function toggleDemo(enabled) {
   if (writing) return;
+  if (enabled === (state.mode === 'demo')) return;
+  memoryChat.reset();
   noteLimit = memoryLimit = pageSize;
   clearTimeout(draftTimer); state.lastDeleted = null;
   if (enabled && state.mode !== 'demo') { saveDraft(); personalDraft = captureDraft(); state.demo = makeDemoEntries(); state.mode = 'demo'; restoreDraft(null); }
@@ -361,8 +366,17 @@ function toggleDemo(enabled) {
   $('#demo-banner').hidden = state.mode !== 'demo';
   updateAccountUI(); renderAll();
 }
-const viewLabels = {notebook:'Notebook', planner:'Planner', timeline:'Timeline', insights:'Insights', memory:'Memory'};
-function setView(view) {
+const viewLabels = {notebook:'Notebook', planner:'Planner', timeline:'Timeline', insights:'Insights', memory:'Memory', chat:'Chat'};
+function setView(hash) {
+  const [view, encodedId] = hash.split('/');
+  state.chatSource = undefined;
+  $('#chat-signin').href = '/signin-with-chatgpt?return_to=%2F%23chat';
+  if (view === 'chat' && encodedId) {
+    try {
+      state.chatSource = decodeURIComponent(encodedId);
+      $('#chat-signin').href = '/signin-with-chatgpt?return_to=' + encodeURIComponent('/#chat/' + encodedId);
+    } catch { /* Ignore incomplete source links. */ }
+  }
   const requested = view === 'patterns' ? 'insights' : view;
   state.view = Object.hasOwn(viewLabels, requested) ? requested : 'notebook';
   $$('.view').forEach(element => { const active = element.id === `view-${state.view}`; element.hidden = !active; element.classList.toggle('active', active); });
@@ -471,7 +485,7 @@ $('#clear-notes').addEventListener('click', async () => {
     if (deviceOnly) { localStorage.removeItem(STORAGE_KEY); state.entries = []; }
     else await commitEntries([], true);
     forgetDraft(); state.draft = null; state.raw = null; state.blocked = false; state.memoryOnly = false;
-    state.lastDeleted = null; personalDraft = null;
+    state.lastDeleted = null; personalDraft = null; memoryChat.reset();
     if (state.mode === 'demo') toggleDemo(false);
     restoreDraft(null); renderAll(); updateAccountUI(); $('#storage-warning').hidden = true;
     $('#settings-message').textContent = 'Your notebook has been cleared.';
@@ -586,11 +600,16 @@ const workspace = createWorkspace({
   changed:message => { renderAll(); toast(message); }, openMoment:openNote,
   resetNotice:() => { $('#toast').hidden = true; }
 });
+const memoryChat = createMemoryChat({
+  $, icon, entries: activeEntries, openRecord: workspace.openRecord,
+  access: () => ({ready: canUseNotebook() || state.mode === 'demo', status: accountStatus, demo: state.mode === 'demo'})
+});
 function renderAll() {
   switch (state.view) {
     case 'planner': workspace.renderPlanner(); break;
     case 'timeline': workspace.renderTimeline(); break;
     case 'insights': workspace.renderInsights(); break;
+    case 'chat': memoryChat.render(state.chatSource); break;
     case 'memory': renderMemory(); startGraph(); break;
     default: renderNotes(); renderWeek(); workspace.renderToday();
   }

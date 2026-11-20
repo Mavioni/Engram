@@ -9,12 +9,14 @@ const css = await readFile(path.join(root, 'web', 'styles.css'), 'utf8');
 const model = (await readFile(path.join(root, 'web', 'model.js'), 'utf8')).replace(/^export /gm, '');
 const account = (await readFile(path.join(root, 'web', 'account.js'), 'utf8')).replace(/^export /gm, '');
 const workspace = (await readFile(path.join(root, 'web', 'workspace.js'), 'utf8')).replace(/^import[^\n]+\n/gm, '').replace(/^export /gm, '');
+const extra = await Promise.all(['recall.js', 'memory-chat.js'].map(async name =>
+  (await readFile(path.join(root, 'web', name), 'utf8')).replace(/^import[^\n]+\n/gm, '').replace(/^export /gm, '')));
 const app = (await readFile(path.join(root, 'web', 'app.js'), 'utf8')).replace(/^import[^\n]+\n/gm, '');
 const favicon = await readFile(path.join(root, 'web', 'favicon.svg'), 'utf8');
 html = html.replace('<link rel="stylesheet" href="/styles.css">', () => `<style>${css}</style>`)
   .replace('<script type="module" src="/app.js"></script>', '')
   .replace('href="/favicon.svg"', () => `href="data:image/svg+xml,${encodeURIComponent(favicon)}"`)
-  .replace('</body>', () => `<script>\n${model}\n${account}\n${workspace}\n${app}\n</script>\n</body>`);
+  .replace('</body>', () => `<script>\n${model}\n${account}\n${workspace}\n${extra.join('\n')}\n${app}\n</script>\n</body>`);
 new Function(html.match(/<script>([\s\S]*)<\/script>/)[1]);
 if (html.includes('src="/app.js"') || html.includes('href="/styles.css"')) throw new Error('The standalone notebook still references local assets.');
 await writeFile(path.join(output, 'Engram-Notebook.html'), html);
