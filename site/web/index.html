@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#151120">
+  <meta name="description" content="A quiet space for your mind. Check in with yourself, keep the moments that matter, and see the connections in your everyday life.">
+  <title>Engram — Your life, in perspective</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to notebook</a>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <a class="brand" href="#notebook" aria-label="Engram home"><span class="brand-symbol" data-icon="iris"></span><span>engram<span class="brand-period">.</span></span></a>
+      <p class="sidebar-caption">A LITTLE CLOSER TO YOU</p>
+      <nav class="main-nav">
+        <a href="#notebook" data-view="notebook" class="nav-item active"><span data-icon="notebook"></span><span>Notebook</span><span class="nav-indicator"></span></a>
+        <a href="#planner" data-view="planner" class="nav-item"><span data-icon="calendar"></span><span>Planner</span><span class="nav-indicator"></span></a>
+        <a href="#timeline" data-view="timeline" class="nav-item"><span data-icon="timeline"></span><span>Timeline</span><span class="nav-indicator"></span></a>
+        <a href="#insights" data-view="insights" class="nav-item"><span data-icon="chart"></span><span>Insights</span><span class="nav-indicator"></span></a>
+        <a href="#memory" data-view="memory" class="nav-item"><span data-icon="network"></span><span>Memory</span><span class="nav-indicator"></span></a>
+      </nav>
+      <div class="sidebar-bottom">
+        <button class="pause-card" data-action="breathe"><span class="pause-art" aria-hidden="true"><i></i><i></i><i></i><i></i></span><strong>Make a little space.</strong><span>A quiet minute, just for you.</span><span class="pause-link">Take a breath <span data-icon="arrow"></span></span></button>
+        <button class="space-button" data-action="settings"><span class="space-avatar" data-icon="leaf"></span><span><strong>Your space</strong><small id="space-label">Notebook settings</small></span><span data-icon="settings"></span></button>
+      </div>
+    </aside>
+    <div class="workspace">
+      <header class="topbar">
+        <a class="mobile-brand" href="#notebook"><span data-icon="iris"></span>engram.</a>
+        <div class="breadcrumb"><span class="breadcrumb-dot"></span> Your personal space <span class="breadcrumb-slash">/</span> <span id="current-view-label">Notebook</span></div>
+        <div class="topbar-actions"><button class="storage-status" data-action="settings"><span></span><span id="storage-label">Opening notebook…</span></button><button class="icon-button mobile-settings" data-action="settings" aria-label="Notebook settings" data-icon="settings"></button><a id="header-signin" class="button button-dark" href="/signin-with-chatgpt?return_to=%2F" target="_top" hidden>Sign in</a><button class="button button-dark top-new" data-action="new" aria-label="New moment" hidden><span data-icon="plus"></span><span class="top-new-label">New moment</span></button></div>
+      </header>
+      <div id="storage-warning" class="storage-warning" role="status" hidden></div>
+      <div id="demo-banner" class="demo-banner" hidden><span><span data-icon="sparkles"></span> <strong>Example notebook</strong><span class="demo-detail"> · Sample moments. Changes here are not saved.</span></span><button data-action="leave-demo"><span id="leave-demo-label">Leave example</span> <span data-icon="arrow"></span></button></div>
+      <main id="main" tabindex="-1">
+        <section id="view-notebook" class="view active" aria-label="Notebook">
+          <div class="notebook-grid">
+            <div class="notebook-column">
+              <div class="page-intro"><p class="eyebrow" id="today-label"></p><h1>Make room<br>for your <em>mind.</em></h1><p>No perfect words. Just a moment of you.</p><span class="intro-mark" aria-hidden="true">✳</span></div>
+              <section id="account-welcome" class="account-welcome card" aria-labelledby="welcome-heading">
+                <span class="welcome-symbol" data-icon="notebook" aria-hidden="true"></span>
+                <h2 id="welcome-heading">Opening your notebook…</h2>
+                <p id="welcome-copy" role="status">Checking your session.</p>
+                <div class="welcome-actions"><a id="welcome-signin" class="button button-dark" href="/signin-with-chatgpt?return_to=%2F" target="_top" hidden>Sign in with ChatGPT <span data-icon="arrow"></span></a><button id="retry-account" class="button button-dark" hidden>Try again</button><button id="welcome-demo" class="text-button" data-action="demo" hidden>Explore an example <span data-icon="arrow-up"></span></button></div>
+              </section>
+              <form id="entry-form" class="composer card" hidden>
+                <div class="section-heading"><h2>How are you, really?</h2><button type="button" class="text-button journal-shortcut" data-action="write">Write a journal entry <span data-icon="arrow"></span></button></div>
+                <fieldset class="mood-fieldset"><legend class="sr-only">Choose a feeling</legend><div id="mood-picker" class="mood-picker"></div></fieldset>
+                <div class="factor-area"><span class="factor-label">What’s part of your day? <span>(optional)</span></span><div id="factor-picker" class="factor-picker"></div><div class="custom-factor"><label class="sr-only" for="custom-tag">Add your own factor</label><input id="custom-tag" maxlength="30" placeholder="+ Add a factor" autocomplete="off"><button type="button" id="add-tag" class="text-button" aria-label="Add factor">Add</button></div></div>
+                <details id="entry-writing" class="entry-writing">
+                  <summary>Add a note <span>(optional)</span></summary>
+                  <div class="writing-area">
+                    <label class="sr-only" for="entry-title">Moment title, optional</label>
+                    <input id="entry-title" class="entry-title" maxlength="100" placeholder="Give this moment a name…" autocomplete="off">
+                    <label class="sr-only" for="entry-body">Your journal entry, optional</label>
+                    <textarea id="entry-body" rows="4" maxlength="10000" placeholder="What’s on your mind? Start anywhere."></textarea>
+                  </div>
+                </details>
+                <div class="composer-footer"><label class="entry-date"><span data-icon="calendar"></span><input id="entry-date" type="date" required aria-label="Date of moment"></label><button type="submit" id="save-entry" class="button button-sage"><span>Keep this moment</span><span data-icon="arrow"></span></button></div>
+                <p id="form-message" class="form-message" role="status"></p>
+              </form>
+              <section class="moments-section" hidden aria-labelledby="moments-title"><div class="section-heading moments-heading"><h2 id="moments-title">Your moments <span id="moment-count" class="count-pill">0</span></h2><button class="text-button example-button" data-action="demo">Explore an example <span data-icon="arrow-up"></span></button></div><div class="search-row"><label class="search-box"><span data-icon="search"></span><input id="search-notes" type="search" placeholder="Find a thought, a word, a feeling…" aria-label="Search moments"></label><label class="sr-only" for="mood-filter">Filter by feeling</label><select id="mood-filter"><option value="all">All moments</option><option value="journal">Journal</option><option value="5">Great</option><option value="4">Good</option><option value="3">Okay</option><option value="2">Low</option><option value="1">Very low</option></select></div><div id="notes-list" class="notes-list" aria-live="polite"></div><button type="button" id="notes-more" class="button button-dark more-records" hidden>Show more moments</button></section>
+            </div>
+            <aside class="right-rail" aria-label="Notebook overview">
+              <section id="today-plans" class="card today-plans" hidden></section>
+              <section class="week-card card"><div class="section-heading"><h2>A week of you</h2><span data-icon="sun"></span></div><p class="rail-subtitle" id="week-range"></p><div id="week-dots" class="week-dots"></div><div class="week-footer"><span id="week-note-count">0 moments this week</span><a href="#insights" aria-label="See your insights" data-icon="arrow-up"></a></div></section>
+              <section class="memory-card"><div class="memory-card-top"><span class="eyebrow">YOUR LIVING MEMORY</span><span data-icon="network"></span></div><div class="memory-orb" aria-hidden="true"><svg viewBox="0 0 300 260"><defs><radialGradient id="orb-glow"><stop stop-color="#b3c99a" stop-opacity=".7"/><stop offset="1" stop-color="#b3c99a" stop-opacity="0"/></radialGradient></defs><circle cx="150" cy="127" r="110" fill="url(#orb-glow)"/><g fill="none" stroke="#b2c69c" stroke-width=".65" opacity=".65"><ellipse cx="150" cy="127" rx="90" ry="88"/><ellipse cx="150" cy="127" rx="90" ry="36" transform="rotate(28 150 127)"/><ellipse cx="150" cy="127" rx="90" ry="36" transform="rotate(83 150 127)"/><ellipse cx="150" cy="127" rx="90" ry="36" transform="rotate(139 150 127)"/><ellipse cx="150" cy="127" rx="57" ry="88" transform="rotate(32 150 127)"/><path d="M75 77 205 66 227 155 128 213 65 155Z M75 77 128 213 205 66 65 155 227 155Z" opacity=".5"/></g><g fill="#d5e6bc"><circle cx="75" cy="77" r="3"/><circle cx="205" cy="66" r="4"/><circle cx="227" cy="155" r="3"/><circle cx="128" cy="213" r="3"/><circle cx="65" cy="155" r="4"/><circle cx="153" cy="119" r="5"/></g></svg></div><h2>Little moments.<br>A bigger picture.</h2><p>See how the things you feel<br>and remember connect.</p><a class="memory-link" href="#memory">Explore your memory <span data-icon="arrow-up"></span></a><div id="memory-card-count" class="memory-card-count">Your story grows with every entry</div></section>
+              <div class="gentle-note"><span data-icon="leaf"></span><p>You don’t have to make sense<br>of everything today.</p></div>
+            </aside>
+          </div>
+        </section>
+        <section id="view-planner" class="view" aria-labelledby="planner-title" hidden>
+          <div class="page-intro compact-intro"><h1 id="planner-title">Planner<span>.</span></h1><p>Make time for what matters to you.</p></div>
+          <div id="planner-content"></div>
+        </section>
+        <section id="view-timeline" class="view" aria-labelledby="timeline-title" hidden>
+          <div class="page-intro compact-intro"><h1 id="timeline-title">Timeline<span>.</span></h1><p>Your writing, feelings, and plans in one place.</p></div>
+          <div id="timeline-content"></div>
+        </section>
+        <section id="view-insights" class="view" aria-labelledby="insights-title" hidden>
+          <div class="page-intro compact-intro"><h1 id="insights-title">Insights<span>.</span></h1><p>See what you’ve made time to notice.</p></div>
+          <div id="insights-content"></div>
+        </section>
+        <section id="view-memory" class="view" aria-labelledby="memory-title" hidden><div class="page-intro compact-intro"><p class="eyebrow">THE CONNECTIONS YOU KEEP</p><h1 id="memory-title">A constellation<br>of <em>you.</em></h1><p>Each point is a moment. Shared factors draw them together.</p></div><section class="graph-card"><div class="graph-toolbar"><span><span class="live-dot"></span> <span id="graph-summary">Your memory</span></span><div><button id="toggle-motion" class="graph-control">Pause motion</button><button id="reset-graph" class="icon-button" aria-label="Reset memory view" data-icon="reset"></button></div></div><div class="graph-container"><canvas id="memory-canvas" aria-label="Three-dimensional memory visualization. The list below provides the same moments and their connections."></canvas><div id="graph-empty" class="graph-empty"><span data-icon="network"></span><h2>Every story begins somewhere.</h2><p>Keep a moment in your notebook.<br>Connections appear when moments share a factor.</p><button class="button button-sage" data-action="new">Keep your first moment <span data-icon="arrow"></span></button></div><div id="graph-tooltip" class="graph-tooltip" hidden></div></div><div class="graph-footer"><span><span class="legend-node"></span> A moment</span><span><span class="legend-line"></span> A shared factor</span><span class="graph-hint">Drag to explore · Select a point to read</span></div></section><section class="memory-list-section"><div class="section-heading"><h2>Your connected moments</h2><span class="quiet-label">The same story, in words</span></div><div id="memory-list" class="memory-list"></div><button type="button" id="memory-more" class="button button-dark more-records" hidden>Show more moments</button></section></section>
+        <footer class="workspace-footer"><span class="footer-mark" data-icon="iris"></span><span>Your life, in perspective.</span><button data-action="settings">Your data, your space <span data-icon="arrow-up"></span></button><a href="https://github.com/Mavioni/Engram" target="_blank" rel="noreferrer">Source code</a></footer>
+      </main>
+    </div>
+  </div>
+  <dialog id="note-dialog" class="modal note-modal" aria-labelledby="note-dialog-title"><div id="note-dialog-content"></div></dialog>
+  <dialog id="record-dialog" class="modal note-modal" aria-labelledby="record-title">
+    <div class="modal-top"><span id="record-kind" class="eyebrow"></span><button class="icon-button" data-close="record-dialog" aria-label="Close editor" data-icon="close"></button></div>
+    <h2 id="record-title"></h2>
+    <form id="record-form" class="edit-form record-form">
+      <label>Title<input name="title" maxlength="100"></label>
+      <div class="record-dates"><label>Date<input name="date" type="date" required></label><label id="record-time">Time (optional)<input name="time" type="time"></label></div>
+      <label>Notes<textarea name="body" maxlength="10000"></textarea></label>
+      <label>Tags (optional)<input name="tags" maxlength="380" placeholder="Reading, work, home"></label>
+      <p id="record-error" class="edit-error" role="status"></p>
+      <div class="record-actions"><button type="button" id="remove-record" class="button danger-action">Delete</button><button type="submit" class="button button-sage">Save <span data-icon="check"></span></button></div>
+    </form>
+  </dialog>
+  <dialog id="settings-dialog" class="modal settings-modal" aria-labelledby="settings-title"><div class="modal-top"><span class="eyebrow">YOUR SPACE</span><button class="icon-button" data-close="settings-dialog" aria-label="Close settings" data-icon="close"></button></div><h2 id="settings-title">Keep what matters.<br>Keep it yours.</h2><p id="account-description" class="modal-description"></p>
+    <div class="settings-info"><span data-icon="shield"></span><div><strong id="account-label">Your notebook</strong><p id="account-detail"></p></div></div>
+    <div class="account-links"><a id="settings-signin" class="button button-dark" href="/signin-with-chatgpt?return_to=%2F" target="_top" hidden>Sign in with ChatGPT</a><a id="settings-signout" class="text-button" href="/signout-with-chatgpt?return_to=%2F" target="_top" hidden>Sign out</a></div>
+    <section id="legacy-panel" class="legacy-panel" hidden><h3>Earlier notebook on this device</h3><p>Import it into the account shown above if these moments are yours.</p><div><button id="legacy-import" class="text-button">Import device copy</button><button id="legacy-export" class="text-button">Download original</button><button id="legacy-forget" class="text-button">Remove device copy</button></div></section><div class="settings-actions"><button id="export-notes" class="setting-row"><span class="setting-icon" data-icon="download"></span><span><strong>Export your notebook</strong><small>A JSON backup of all your entries</small></span><span data-icon="arrow-up"></span></button><button id="import-notes" class="setting-row"><span class="setting-icon" data-icon="upload"></span><span><strong>Import a notebook</strong><small>Add entries from an Engram JSON backup</small></span><span data-icon="arrow-up"></span></button><input id="import-file" type="file" accept="application/json,.json" hidden><button id="clear-notes" class="setting-row danger-row"><span class="setting-icon" data-icon="trash"></span><span><strong>Clear your notebook</strong><small><span id="clear-description">Remove your moments and this tab’s draft</span></small></span><span data-icon="arrow-up"></span></button></div><p id="settings-message" class="settings-message" role="status"></p><p class="settings-version">ENGRAM · A little closer to yourself.</p></dialog>
+  <dialog id="breath-dialog" class="modal breath-modal" aria-labelledby="breath-title"><div class="modal-top"><span class="eyebrow">ONE QUIET MINUTE</span><button class="icon-button" data-close="breath-dialog" aria-label="Close breathing exercise" data-icon="close"></button></div><h2 id="breath-title">Come back to<br>this <em>moment.</em></h2><p class="modal-description">Follow the circle at a pace that feels comfortable.</p><div id="breath-orb" class="breath-orb"><div></div><span id="breath-phase" aria-live="polite">Make a little space</span></div><p id="breath-time" class="breath-time">60 seconds, just for you</p><button id="start-breath" class="button button-sage">Begin a quiet minute <span data-icon="arrow"></span></button><button class="text-button breath-journal" data-action="reflect-breath">Put a thought into words</button></dialog>
+  <div id="toast" class="toast" role="status" hidden><span data-icon="check"></span><span id="toast-message"></span><button id="toast-undo" hidden>Undo</button><button id="toast-dismiss" aria-label="Dismiss notification" data-icon="close"></button></div>
+  <noscript><p class="noscript">Engram needs JavaScript to save your notebook and show your memories. Please enable JavaScript in this browser.</p></noscript>
+</body>
+</html>

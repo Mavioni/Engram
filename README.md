@@ -1,6 +1,10 @@
 # Engram
 
-## Engram Notebook — live product direction
+## Engram Notebook
+
+The [hosted Engram notebook](https://engram.sugarysquirrel64.chatgpt.site) uses Sign in with ChatGPT and an owner-scoped Cloudflare D1 notebook. Its Worker, Planner, Timeline, Insights, and release tests live in [`site/`](site/README.md). Run `npm --prefix site test` and `npm --prefix site run build` to check it locally.
+
+### GitHub Pages preview and Capacitor client
 
 **The Notebook is the app. The Engram is the visualization of real, user-authored data.**
 
@@ -8,7 +12,7 @@ The current website redesign puts a genuinely usable Notebook first. It includes
 
 **Preview:** https://mavioni.github.io/Engram/ (GitHub Pages must complete its verification/deployment workflow before the new UI is served).
 
-**Current limitations:** Browser storage is local to the current device, not encrypted or cloud-synced. D1 Notebook API and migration code exist, but production deployment, sign-in, migration application, cross-device sync, and AI inference are **not verified**. The site intentionally does not claim these services are live.
+**GitHub Pages preview storage:** Browser storage is local to the current device, not encrypted or cloud-synced. The separate Better Auth Worker under `server/` has its own deployment and database and is not used by the hosted ChatGPT notebook.
 
 
 **Engram is a cloud-first intelligence and agent platform with persistent identity, memory, reasoning, governed execution, and a unified user experience.**
