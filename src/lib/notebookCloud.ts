@@ -6,7 +6,7 @@ import { isEntry, type NotebookEntry } from '../experience/model'
 
 export type CloudEntry = NotebookEntry & { revision: number }
 export type CloudSession = { user: { id: string; email: string } }
-export type CloudPage = { entries: CloudEntry[]; limit: number; partial: boolean }
+export type CloudPage = { entries: CloudEntry[]; limit: number; partial: boolean; nextCursor: string | null }
 
 export class CloudApiError extends Error {
   constructor(message: string, readonly status: number) {
@@ -65,13 +65,31 @@ export const notebookCloud = {
     }
   },
   /** Returns one bounded page. Never interpret partial=true as a complete backup. */
-  async list(limit = 100): Promise<CloudPage> {
+  async list(limit = 100, cursor?: string): Promise<CloudPage> {
     if (!Number.isInteger(limit) || limit < 1 || limit > 200) throw new Error('Invalid page size.')
-    const data = await request<CloudPage>(`/api/notebook?limit=${limit}`)
-    if (!Array.isArray(data?.entries) || !data.entries.every(isCloudEntry) || typeof data.partial !== 'boolean') {
+    const data = await request<CloudPage>(`/api/notebook?limit=${limit}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`)
+    if (!Array.isArray(data?.entries) || !data.entries.every(isCloudEntry) || typeof data.partial !== 'boolean' ||\n      !(data.nextCursor === null || (typeof data.nextCursor === 'string' && /^\\d{1,16}:[\\w-]{8,120}$/.test(data.nextCursor))) ||\n      (data.partial && !data.nextCursor)) {
       throw new Error('Unexpected cloud Notebook response; local data was not changed.')
     }
     return data
+  },
+  /** Retrieve all cloud pages without changing local Notebook state.
+   * A bounded traversal avoids infinite loops on malformed responses.
+   * Concurrent writes may change the ordering; reconcile by ID before importing.
+   */
+  async listAll(): Promise<CloudEntry[]> {
+    const entries = new Map<string, CloudEntry>()
+    let cursor: string | undefined
+    const visited = new Set<string>()
+    for (let pageNumber = 0; pageNumber < 500; pageNumber++) {
+      const page = await notebookCloud.list(200, cursor)
+      for (const entry of page.entries) entries.set(entry.id, entry)
+      if (!page.partial) return [...entries.values()]
+      if (!page.nextCursor || visited.has(page.nextCursor)) throw new Error('Cloud pagination did not advance. Local data is unchanged.')
+      visited.add(page.nextCursor)
+      cursor = page.nextCursor
+    }
+    throw new Error('Cloud Notebook exceeded the safe pagination limit. Local data is unchanged.')
   },
   /** Caller must obtain affirmative sync consent and resolve any conflicts first. */
   async put(entry: NotebookEntry, expectedRevision = 0): Promise<CloudEntry> {
