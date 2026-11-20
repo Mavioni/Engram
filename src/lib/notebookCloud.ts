@@ -68,7 +68,9 @@ export const notebookCloud = {
   async list(limit = 100, cursor?: string): Promise<CloudPage> {
     if (!Number.isInteger(limit) || limit < 1 || limit > 200) throw new Error('Invalid page size.')
     const data = await request<CloudPage>(`/api/notebook?limit=${limit}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`)
-    if (!Array.isArray(data?.entries) || !data.entries.every(isCloudEntry) || typeof data.partial !== 'boolean' ||\n      !(data.nextCursor === null || (typeof data.nextCursor === 'string' && /^\\d{1,16}:[\\w-]{8,120}$/.test(data.nextCursor))) ||\n      (data.partial && !data.nextCursor)) {
+    if (!Array.isArray(data?.entries) || !data.entries.every(isCloudEntry) || typeof data.partial !== 'boolean' ||
+      !(data.nextCursor === null || (typeof data.nextCursor === 'string' && /^\\d{1,16}:[\\w-]{8,120}$/.test(data.nextCursor))) ||
+      (data.partial && !data.nextCursor)) {
       throw new Error('Unexpected cloud Notebook response; local data was not changed.')
     }
     return data
