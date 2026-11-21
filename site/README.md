@@ -1,12 +1,24 @@
 # Engram Notebook
 
-Engram is a private notebook with journal entries, mood check-ins, dated plans, a searchable Timeline, Insights, a 3D memory view, a breathing timer and JSON backup. Visitors can explore an in-memory example. Sign in with ChatGPT to use a personal notebook on multiple devices.
+Engram is a private notebook with journal entries, mood check-ins, dated plans, a searchable Timeline, Insights, a memory graph, a breathing timer and JSON backup. Visitors can explore an in-memory example. Sign in with ChatGPT to use a personal notebook on multiple devices.
 
 ## Storage
 
 Sites supplies the signed-in visitor identity to the Worker. The Worker scopes every notebook query and write to that identity. Cloudflare D1 stores saved records. Plans, journal entries and earlier mood check-ins share the existing owner-scoped record store and revision transaction. The release requires the existing initialization migration and introduces no new DDL. Notebook revisions prevent stale edits from overwriting newer saves. Drafts stay in account-scoped session storage in the current tab. Your space includes export, import, account-wide clear and sign-out. Earlier browser-only notebooks can be imported explicitly from that screen.
 
 Plans use the calendar date and wall-clock time you enter. The same date and time display on any device. This release supports one-time plans. Insights count saved journal and check-in activity, with a selectable date range and all-time streaks.
+
+## Memory graph
+
+The Memory tab indexes journal entries, mood check-ins, and plans from the active notebook. Tags become topic nodes and provide every graph edge. The index searches the full notebook, the inspector shows related entries, and trace follows the shortest chain of shared tags. The graph renders up to 68 nodes at a time; the index and trace use the full notebook. The graph is rendered locally and requires no additional service.
+
+The explorer’s graph, index, inspector, and trace workflow were inspired by [GitNexus](https://github.com/abhigyanpatwari/GitNexus). It uses Engram’s notebook model and renderer.
+
+## Memory chat
+
+The Chat screen uses your current Engram session and searches the notebook already loaded in the browser. Replies are based on matching excerpts, and the chat resets when the page or account changes. It can be used in the example notebook without signing in.
+
+The optional private Engram plugin lets a ChatGPT conversation search the signed-in user’s Engram notebook with `search_engram_memory`. The Worker authenticates each tool invocation and returns up to six dated sources with short excerpts. The tool cannot modify the notebook. It does not use OpenAI API keys or access ChatGPT history. The browser-side chat does not call a model.
 
 ## Develop
 

@@ -1,6 +1,8 @@
-import { STORAGE_KEY, DRAFT_KEY, MOODS, FACTORS, localDate, dateObject, validDate, normalizeTags, validateEntry, parseNotebook, mergeEntries, notebookJSON, entryTitle, sortedEntries, filterEntries, weekData, connections } from './model.js';
+import { STORAGE_KEY, DRAFT_KEY, MOODS, FACTORS, localDate, dateObject, validDate, normalizeTags, validateEntry, parseNotebook, mergeEntries, notebookJSON, entryTitle, sortedEntries, filterEntries, weekData } from './model.js';
 import { loadCloudNotebook, saveCloudNotebook } from './account.js';
 import { createWorkspace } from './workspace.js';
+import { createMemoryChat } from './memory-chat.js';
+import { createMemoryExplorer } from './memory-explorer.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -21,6 +23,7 @@ const icons = {
   timeline:'<path d="M7 3v18M13 5h7M13 12h7M13 19h7"/><circle cx="7" cy="5" r="2"/><circle cx="7" cy="12" r="2"/><circle cx="7" cy="19" r="2"/>',
   left:'<path d="m15 18-6-6 6-6"/>',
   right:'<path d="m9 6 6 6-6 6"/>',
+  chat:'<path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-5 4V6ZM8 9h8m-8 3h5"/>',
   search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',
   sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>',
   sparkles:'<path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3ZM21 2v4m-2-2h4"/>',
@@ -48,9 +51,9 @@ function face(value) {
 hydrateIcons();
 
 const state = { entries: [], demo: [], mode: 'personal', mood: null, tags: [], customTags: [], draft: null, view: 'notebook', memoryOnly: false, blocked: false, raw: null, lastDeleted: null, noteId: null };
-let toastTimer, draftTimer, breathInterval, graphFrame;
+let toastTimer, draftTimer, breathInterval;
 const pageSize = 30;
-let noteLimit = pageSize, memoryLimit = pageSize;
+let noteLimit = pageSize;
 let personalDraft = null;
 const now = () => new Date();
 const activeEntries = () => state.mode === 'demo' ? state.demo : state.entries;
@@ -127,11 +130,12 @@ function resetAccountView() {
   $('#search-notes').value = ''; $('#mood-filter').value = 'all';
   state.mode = 'personal'; state.entries = []; state.draft = null; state.lastDeleted = null;
   personalDraft = null; state.noteId = null; state.demo = []; restoreDraft(null);
-  graph.entries = []; graph.edges = []; graph.nodes = []; graph.projected = []; graph.hovered = -1;
   workspace.reset();
-  noteLimit = memoryLimit = pageSize;
-  for (const selector of ['#memory-list', '#notes-list', '#week-dots', '#planner-content', '#insights-content', '#today-plans']) $(selector).replaceChildren();
-  $('#import-file').value = ''; drawGraph();
+  memoryChat.reset();
+  memoryExplorer.reset();
+  noteLimit = pageSize;
+  for (const selector of ['#notes-list', '#week-dots', '#planner-content', '#insights-content', '#today-plans']) $(selector).replaceChildren();
+  $('#import-file').value = '';
 }
 async function refreshNotebook() {
   if (deviceOnly || refreshing || writing) return;
@@ -275,10 +279,10 @@ $('#entry-form').addEventListener('submit', async event => {
   } catch (error) { $('#form-message').textContent = error.message; }
 });
 
-function noteCard(entry, connectionText = '') {
+function noteCard(entry) {
   const mood = MOODS[entry.mood - 1];
   const link = entry.kind === 'journal' ? 'data-record' : 'data-note';
-  return `<button class="note-card" ${link}="${esc(entry.id)}"><span class="note-card-symbol">${mood ? face(entry.mood) : icon('notebook')}</span><div class="note-card-content"><div class="note-card-meta"><span>${esc(dateLabel(entry.date, { month: 'short', day: 'numeric', year: 'numeric' }))}</span><span>·</span><span class="mood-label">${mood?.label ?? 'Journal'}</span></div><h3>${esc(entryTitle(entry))}</h3>${entry.body ? `<p>${esc(entry.body)}</p>` : ''}${entry.tags.length ? `<div class="note-tags">${entry.tags.map(tag => `<span>${esc(tag)}</span>`).join('')}</div>` : ''}${connectionText ? `<div class="connection-caption">${esc(connectionText)}</div>` : ''}</div><span>${icon('arrow-up')}</span></button>`;
+  return `<button class="note-card" ${link}="${esc(entry.id)}"><span class="note-card-symbol">${mood ? face(entry.mood) : icon('notebook')}</span><div class="note-card-content"><div class="note-card-meta"><span>${esc(dateLabel(entry.date, { month: 'short', day: 'numeric', year: 'numeric' }))}</span><span>·</span><span class="mood-label">${mood?.label ?? 'Journal'}</span></div><h3>${esc(entryTitle(entry))}</h3>${entry.body ? `<p>${esc(entry.body)}</p>` : ''}${entry.tags.length ? `<div class="note-tags">${entry.tags.map(tag => `<span>${esc(tag)}</span>`).join('')}</div>` : ''}</div><span>${icon('arrow-up')}</span></button>`;
 }
 function renderNotes() {
   const saved = notebookEntries();
@@ -295,7 +299,6 @@ function showMore(list, previousLimit, render) {
   $(list).querySelectorAll('.note-card')[previousLimit]?.focus();
 }
 $('#notes-more').addEventListener('click', () => showMore('#notes-list', noteLimit, () => { noteLimit += pageSize; renderNotes(); }));
-$('#memory-more').addEventListener('click', () => showMore('#memory-list', memoryLimit, () => { memoryLimit += pageSize; renderMemoryList(); }));
 function renderWeek() {
   const days = weekData(notebookEntries());
   $('#week-range').textContent = `${dateLabel(days[0].date)} — ${dateLabel(days[6].date)}`;
@@ -348,12 +351,15 @@ function makeDemoEntries() {
   ];
   const moments = samples.map((sample, i) => { const date = now(); date.setDate(date.getDate() - sample.offset); return validateEntry({ id: `example-${i}`, ...sample, date: localDate(date), createdAt: date.toISOString() }); });
   return [...moments,
-    validateEntry({id:'example-journal', kind:'journal', title:'Something to return to', body:'An unhurried afternoon with a book.', date:localDate(), tags:['Rest']}),
-    validateEntry({id:'example-plan', kind:'plan', title:'Make time to read', body:'A few pages before dinner.', date:localDate(), time:'17:30', done:false})];
+    validateEntry({id:'example-journal', kind:'journal', title:'Something to return to', body:'An unhurried afternoon with a book.', date:localDate(), tags:['Rest','Reading']}),
+    validateEntry({id:'example-plan', kind:'plan', title:'Make time to read', body:'A few pages before dinner.', date:localDate(), time:'17:30', done:false, tags:['Reading']})];
 }
 function toggleDemo(enabled) {
   if (writing) return;
-  noteLimit = memoryLimit = pageSize;
+  if (enabled === (state.mode === 'demo')) return;
+  memoryChat.reset();
+  memoryExplorer.reset();
+  noteLimit = pageSize;
   clearTimeout(draftTimer); state.lastDeleted = null;
   if (enabled && state.mode !== 'demo') { saveDraft(); personalDraft = captureDraft(); state.demo = makeDemoEntries(); state.mode = 'demo'; restoreDraft(null); }
   else if (!enabled && state.mode !== 'personal') { state.mode = 'personal'; restoreDraft(personalDraft || state.draft); }
@@ -361,15 +367,23 @@ function toggleDemo(enabled) {
   $('#demo-banner').hidden = state.mode !== 'demo';
   updateAccountUI(); renderAll();
 }
-const viewLabels = {notebook:'Notebook', planner:'Planner', timeline:'Timeline', insights:'Insights', memory:'Memory'};
-function setView(view) {
+const viewLabels = {notebook:'Notebook', planner:'Planner', timeline:'Timeline', insights:'Insights', memory:'Memory', chat:'Chat'};
+function setView(hash) {
+  const [view, encodedId] = hash.split('/');
+  state.chatSource = undefined;
+  $('#chat-signin').href = '/signin-with-chatgpt?return_to=%2F%23chat';
+  if (view === 'chat' && encodedId) {
+    try {
+      state.chatSource = decodeURIComponent(encodedId);
+      $('#chat-signin').href = '/signin-with-chatgpt?return_to=' + encodeURIComponent('/#chat/' + encodedId);
+    } catch { /* Ignore incomplete source links. */ }
+  }
   const requested = view === 'patterns' ? 'insights' : view;
   state.view = Object.hasOwn(viewLabels, requested) ? requested : 'notebook';
   $$('.view').forEach(element => { const active = element.id === `view-${state.view}`; element.hidden = !active; element.classList.toggle('active', active); });
   $$('[data-view]').forEach(element => { const active = element.dataset.view === state.view; element.classList.toggle('active', active); if (active) element.setAttribute('aria-current', 'page'); else element.removeAttribute('aria-current'); });
   $('#current-view-label').textContent = viewLabels[state.view];
   document.title = `${viewLabels[state.view]} · Engram`;
-  if (state.view !== 'memory') cancelAnimationFrame(graphFrame);
   renderAll();
 }
 window.addEventListener('hashchange', () => {
@@ -471,7 +485,7 @@ $('#clear-notes').addEventListener('click', async () => {
     if (deviceOnly) { localStorage.removeItem(STORAGE_KEY); state.entries = []; }
     else await commitEntries([], true);
     forgetDraft(); state.draft = null; state.raw = null; state.blocked = false; state.memoryOnly = false;
-    state.lastDeleted = null; personalDraft = null;
+    state.lastDeleted = null; personalDraft = null; memoryChat.reset(); memoryExplorer.reset();
     if (state.mode === 'demo') toggleDemo(false);
     restoreDraft(null); renderAll(); updateAccountUI(); $('#storage-warning').hidden = true;
     $('#settings-message').textContent = 'Your notebook has been cleared.';
@@ -491,94 +505,6 @@ function updateBreath() {
 $('#start-breath').addEventListener('click', () => { if (breathStart) { resetBreath(); return; } breathStart = Date.now(); $('#start-breath').innerHTML = `End this minute ${icon('close')}`; updateBreath(); breathInterval = setInterval(updateBreath, 150); });
 $('#breath-dialog').addEventListener('close', resetBreath);
 
-const graph = { entries: [], edges: [], nodes: [], projected: [], angle: .3, tilt: -.15, motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, width: 0, height: 0, drag: null, hovered: -1, frameTime: 0 };
-const canvas = $('#memory-canvas'), context = canvas.getContext('2d');
-function renderMemory() {
-  const entries = sortedEntries(notebookEntries());
-  graph.entries = entries.slice(0, 120); graph.edges = connections(graph.entries);
-  graph.nodes = graph.entries.map((entry, i, array) => {
-    const y = 1 - (i + .5) * 2 / array.length, radius = Math.sqrt(1 - y * y), theta = i * Math.PI * (3 - Math.sqrt(5));
-    return { x: Math.cos(theta) * radius, y, z: Math.sin(theta) * radius, entry };
-  });
-  const total = graph.entries.length;
-  $('#graph-summary').textContent = `${plural(total, 'moment')} · ${plural(graph.edges.length, 'connection')}${entries.length > 120 ? ' · latest 120 shown' : ''}`;
-  $('#graph-empty').hidden = total > 0;
-  $('#toggle-motion').textContent = graph.motion ? 'Pause motion' : 'Resume motion';
-  $('#toggle-motion').disabled = !total; $('#reset-graph').disabled = !total;
-  renderMemoryList(entries);
-  drawGraph();
-}
-function renderMemoryList(entries = sortedEntries(notebookEntries())) {
-  const connectionMap = new Map(graph.entries.map(entry => [entry.id, 0]));
-  graph.edges.forEach(edge => { for (const index of [edge.from, edge.to]) { const id = graph.entries[index].id; connectionMap.set(id, connectionMap.get(id) + 1); } });
-  $('#memory-more').hidden = entries.length <= memoryLimit;
-  $('#memory-list').innerHTML = entries.length ? entries.slice(0, memoryLimit).map(entry => noteCard(entry, connectionMap.has(entry.id) ? `${plural(connectionMap.get(entry.id), 'connection')} through shared factors` : 'Outside the latest 120 graph moments')).join('') : '<p class="small-empty">Your saved moments will appear here. Their connections are drawn from the factors you choose.</p>';
-}
-function resizeGraph() {
-  const rect = canvas.getBoundingClientRect(); if (!rect.width || !rect.height) return;
-  const ratio = Math.min(devicePixelRatio || 1, 2); graph.width = rect.width; graph.height = rect.height;
-  canvas.width = rect.width * ratio; canvas.height = rect.height * ratio; context.setTransform(ratio, 0, 0, ratio, 0, 0); drawGraph();
-}
-new ResizeObserver(resizeGraph).observe(canvas);
-function drawGraph() {
-  if (!context || !graph.width || !graph.height) return;
-  const { width, height, angle, tilt } = graph; context.clearRect(0, 0, width, height);
-  const radius = Math.min(width * .32, height * .35, 180), cx = width / 2, cy = height / 2;
-  const glow = context.createRadialGradient(cx, cy, 0, cx, cy, radius * 1.5); glow.addColorStop(0, '#91af6d19'); glow.addColorStop(1, '#91af6d00'); context.fillStyle = glow; context.fillRect(0, 0, width, height);
-  if (!graph.nodes.length) return;
-  graph.projected = graph.nodes.map(node => {
-    const rx = node.x * Math.cos(angle) - node.z * Math.sin(angle), rz = node.x * Math.sin(angle) + node.z * Math.cos(angle);
-    const ry = node.y * Math.cos(tilt) - rz * Math.sin(tilt), z = node.y * Math.sin(tilt) + rz * Math.cos(tilt), perspective = 3 / (3 - z * .55);
-    return { x: cx + rx * radius * perspective, y: cy + ry * radius * perspective, z, scale: perspective };
-  });
-  context.strokeStyle = '#93ae6a17'; context.lineWidth = .7; context.beginPath(); context.ellipse(cx, cy, radius * 1.08, radius * 1.08, 0, 0, Math.PI * 2); context.stroke();
-  for (const edge of graph.edges) {
-    const from = graph.projected[edge.from], to = graph.projected[edge.to], highlighted = graph.hovered === edge.from || graph.hovered === edge.to;
-    context.beginPath(); context.moveTo(from.x, from.y); context.lineTo(to.x, to.y); context.strokeStyle = highlighted ? '#d3e4acaa' : `rgba(173,199,140,${.09 + (from.z + to.z + 2) * .04})`; context.lineWidth = highlighted ? 1.6 : .7; context.stroke();
-  }
-  const order = graph.projected.map((point, index) => ({ point, index })).sort((a, b) => a.point.z - b.point.z);
-  for (const { point, index } of order) {
-    const mood = MOODS[graph.entries[index].mood - 1], active = graph.hovered === index;
-    context.globalAlpha = .62 + (point.z + 1) * .19; context.shadowBlur = active ? 24 : 12; context.shadowColor = mood?.color ?? '#c2acff'; context.fillStyle = context.shadowColor;
-    context.beginPath(); context.arc(point.x, point.y, (active ? 8 : 5.5) * point.scale, 0, Math.PI * 2); context.fill(); context.shadowBlur = 0; context.globalAlpha = 1;
-    if (active || graph.entries.length <= 10) {
-      const label = entryTitle(graph.entries[index]); context.font = '10px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'; context.fillStyle = active ? '#e5efdb' : '#b2c39e'; context.textAlign = 'center'; context.fillText(label.length > 27 ? `${label.slice(0, 26)}…` : label, point.x, point.y + 22, Math.min(width - 40, 175));
-    }
-  }
-}
-function startGraph() {
-  cancelAnimationFrame(graphFrame); resizeGraph(); graph.frameTime = 0;
-  function frame(time) {
-    if (state.view !== 'memory') return;
-    if (graph.motion && !graph.drag && !document.hidden) graph.angle += Math.min(graph.frameTime ? time - graph.frameTime : 16, 50) * .00011;
-    graph.frameTime = time; drawGraph();
-    if (graph.motion) graphFrame = requestAnimationFrame(frame);
-  }
-  graphFrame = requestAnimationFrame(frame);
-}
-function closestGraphPoint(event) {
-  const rect = canvas.getBoundingClientRect(), x = event.clientX - rect.left, y = event.clientY - rect.top;
-  let closest = -1, distance = 24;
-  graph.projected.forEach((point, index) => { const d = Math.hypot(point.x - x, point.y - y); if (d < distance) { closest = index; distance = d; } });
-  return closest;
-}
-canvas.addEventListener('pointerdown', event => { graph.drag = { startX: event.clientX, startY: event.clientY, x: event.clientX, y: event.clientY, moved: false }; canvas.setPointerCapture(event.pointerId); });
-canvas.addEventListener('pointermove', event => {
-  if (graph.drag) {
-    const drag = graph.drag;
-    if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 6) drag.moved = true;
-    if (drag.moved) { graph.angle += (event.clientX - drag.x) * .008; graph.tilt = Math.max(-1.2, Math.min(1.2, graph.tilt + (event.clientY - drag.y) * .005)); }
-    drag.x = event.clientX; drag.y = event.clientY; drawGraph();
-  }
-  graph.hovered = closestGraphPoint(event); canvas.style.cursor = graph.hovered >= 0 ? 'pointer' : graph.entries.length ? 'grab' : 'default';
-  if (!graph.motion) drawGraph();
-});
-canvas.addEventListener('pointerup', event => { const drag = graph.drag; graph.drag = null; if (drag && !drag.moved) { const index = closestGraphPoint(event); if (index >= 0) openNote(graph.entries[index].id); } });
-canvas.addEventListener('pointercancel', () => { graph.drag = null; });
-canvas.addEventListener('pointerleave', () => { if (!graph.drag) graph.hovered = -1; if (!graph.motion) drawGraph(); });
-$('#toggle-motion').addEventListener('click', () => { graph.motion = !graph.motion; $('#toggle-motion').textContent = graph.motion ? 'Pause motion' : 'Resume motion'; if (graph.motion) startGraph(); else { cancelAnimationFrame(graphFrame); drawGraph(); } });
-$('#reset-graph').addEventListener('click', () => { graph.angle = .3; graph.tilt = -.15; graph.hovered = -1; drawGraph(); });
-matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', event => { if (event.matches) { graph.motion = false; cancelAnimationFrame(graphFrame); $('#toggle-motion').textContent = 'Resume motion'; drawGraph(); } });
 const workspace = createWorkspace({
   $, esc, icon, entries:activeEntries,
   access: () => ({view:state.view, ready:canUseNotebook() || state.mode === 'demo', status:accountStatus}),
@@ -586,12 +512,21 @@ const workspace = createWorkspace({
   changed:message => { renderAll(); toast(message); }, openMoment:openNote,
   resetNotice:() => { $('#toast').hidden = true; }
 });
+const memoryChat = createMemoryChat({
+  $, icon, entries: activeEntries, openRecord: workspace.openRecord,
+  access: () => ({ready: canUseNotebook() || state.mode === 'demo', status: accountStatus, demo: state.mode === 'demo'})
+});
+const memoryExplorer = createMemoryExplorer({
+  $, entries:activeEntries, openRecord:workspace.openRecord,
+  access: () => ({ready:canUseNotebook() || state.mode === 'demo', status:accountStatus})
+});
 function renderAll() {
   switch (state.view) {
     case 'planner': workspace.renderPlanner(); break;
     case 'timeline': workspace.renderTimeline(); break;
     case 'insights': workspace.renderInsights(); break;
-    case 'memory': renderMemory(); startGraph(); break;
+    case 'chat': memoryChat.render(state.chatSource); break;
+    case 'memory': memoryExplorer.render(); break;
     default: renderNotes(); renderWeek(); workspace.renderToday();
   }
 }
