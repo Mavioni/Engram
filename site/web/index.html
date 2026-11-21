@@ -102,7 +102,7 @@
           <div class="memory-shell" id="memory-shell" hidden>
             <div class="memory-tools">
               <label class="search-box memory-search"><span data-icon="search"></span><input type="search" id="memory-query" aria-label="Search memory" placeholder="Search titles, text, tags, or dates"></label>
-              <label><span class="sr-only">Entry type</span><select id="memory-kind"><option value="all">All entries</option><option value="journal">Journal</option><option value="moment">Check-ins</option><option value="plan">Plans</option></select></label>
+              <label><span class="sr-only">Entry type</span><select id="memory-kind"><option value="all">All entries</option><option value="journal">Journal</option><option value="memory">Saved memories</option><option value="moment">Check-ins</option><option value="plan">Plans</option></select></label>
               <label><span class="sr-only">Topic</span><select id="memory-topic"><option value="">All topics</option></select></label>
               <div class="segments memory-modes" role="group" aria-label="Memory view">
                 <button type="button" id="memory-graph-mode" aria-pressed="true">Graph</button>
@@ -148,8 +148,8 @@
         </section>
         <section id="view-chat" class="view memory-chat" aria-labelledby="chat-title" hidden>
           <div class="page-intro compact-intro chat-intro">
-            <h1 id="chat-title">Memory chat<span>.</span></h1>
-            <p>Ask about your journal, check-ins, and plans.</p>
+            <h1 id="chat-title">Talk with your Engram<span>.</span></h1>
+            <p>Recall a part of your life, reflect on it, or save something worth keeping.</p>
             <div class="chat-iris" aria-hidden="true"><i></i><i></i><i></i><b></b></div>
           </div>
           <section id="chat-gate" class="card view-gate chat-gate" aria-labelledby="chat-gate-title">
@@ -162,24 +162,31 @@
           </section>
           <div id="chat-interface" hidden>
             <p id="chat-link-status" role="status"></p>
+            <div id="chat-pending" class="card chat-pending" hidden><div><strong>Memory draft</strong><p id="chat-pending-title"></p></div><button id="chat-review-draft" type="button" class="button button-sage">Review draft</button></div>
             <section class="card chat-room" aria-label="Conversation">
               <header class="chat-room-head">
-                <div><h2>Engram</h2><p>Notebook search</p></div>
-                <button class="text-button" type="button" id="chat-clear" hidden>Clear chat</button>
+                <div><h2>Engram</h2><p id="chat-memory-count">Notebook recall</p></div>
+                <div class="chat-room-actions"><button class="text-button" type="button" id="chat-clear" hidden>Clear chat</button>
+                  <button class="button button-dark" type="button" id="chat-new-memory"><span data-icon="plus"></span>New memory</button></div>
               </header>
               <div id="chat-starters" class="chat-starters" aria-label="Example questions"></div>
               <div id="chat-log" class="chat-log" role="log" aria-label="Messages" tabindex="0"></div>
               <form id="chat-form" class="chat-form">
                 <label class="sr-only" for="chat-question">Ask about your notebook</label>
-                <textarea id="chat-question" rows="2" maxlength="400" placeholder="When did I last write about reading?" required></textarea>
+                <textarea id="chat-question" rows="2" maxlength="400" placeholder="Ask a question or say “Remember that…”" required></textarea>
                 <button type="submit" class="button button-sage">Send <span data-icon="arrow"></span></button>
               </form>
             </section>
           </div>
           <details id="chat-connection" class="card chat-connection" hidden>
-            <summary>Use Engram in ChatGPT</summary>
-            <p>In ChatGPT, open your personal plugins, connect Engram, then ask it to search your notebook. When you invoke Engram there, matching notebook excerpts can appear in that ChatGPT conversation.</p>
-            <a class="text-button" href="https://chatgpt.com/" target="_blank" rel="noreferrer">Open ChatGPT <span data-icon="arrow-up"></span></a>
+            <summary>Reflect with ChatGPT</summary>
+            <p>Connect Engram under your personal plugins. Ask ChatGPT to read relevant notebook excerpts, reflect on how they relate, or prepare a memory draft you can review here.</p>
+            <div class="chat-connection-actions">
+              <button id="chat-copy-prompt" class="text-button" type="button">Copy a starting prompt</button>
+              <a class="text-button" href="https://chatgpt.com/" target="_blank" rel="noreferrer">Open ChatGPT <span data-icon="arrow-up"></span></a>
+            </div>
+            <p id="chat-copy-status" role="status"></p>
+            <textarea id="chat-copy-text" rows="4" readonly aria-label="Starting prompt for ChatGPT" hidden></textarea>
           </details>
         </section>
         <footer class="workspace-footer"><span class="footer-mark" data-icon="iris"></span><span>Your life, in perspective.</span><button data-action="settings">Your data, your space <span data-icon="arrow-up"></span></button><a href="https://github.com/Mavioni/Engram" target="_blank" rel="noreferrer">Source code</a></footer>
@@ -195,8 +202,10 @@
       <div class="record-dates"><label>Date<input name="date" type="date" required></label><label id="record-time">Time (optional)<input name="time" type="time"></label></div>
       <label>Notes<textarea name="body" maxlength="10000"></textarea></label>
       <label>Tags (optional)<input name="tags" maxlength="380" placeholder="Reading, work, home"></label>
+      <label id="record-memory-label" hidden>Memory category<select name="memoryCategory"></select></label>
+      <p id="record-memory-origin" class="record-memory-origin" hidden></p>
       <p id="record-error" class="edit-error" role="status"></p>
-      <div class="record-actions"><button type="button" id="remove-record" class="button danger-action">Delete</button><button type="submit" class="button button-sage">Save <span data-icon="check"></span></button></div>
+      <div class="record-actions"><button type="button" id="remove-record" class="button danger-action">Delete</button><button type="submit" class="button button-sage"><span id="record-save-label">Save</span> <span data-icon="check"></span></button></div>
     </form>
   </dialog>
   <dialog id="settings-dialog" class="modal settings-modal" aria-labelledby="settings-title"><div class="modal-top"><span class="eyebrow">YOUR SPACE</span><button class="icon-button" data-close="settings-dialog" aria-label="Close settings" data-icon="close"></button></div><h2 id="settings-title">Keep what matters.<br>Keep it yours.</h2><p id="account-description" class="modal-description"></p>

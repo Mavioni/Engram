@@ -351,7 +351,7 @@ function makeDemoEntries() {
   ];
   const moments = samples.map((sample, i) => { const date = now(); date.setDate(date.getDate() - sample.offset); return validateEntry({ id: `example-${i}`, ...sample, date: localDate(date), createdAt: date.toISOString() }); });
   return [...moments,
-    validateEntry({id:'example-journal', kind:'journal', title:'Something to return to', body:'An unhurried afternoon with a book.', date:localDate(), tags:['Rest','Reading']}),
+    validateEntry({id:'example-journal', kind:'journal', title:'Something to return to', body:'An unhurried afternoon with a book.', date:localDate(), tags:['Rest','Reading'], memory:{category:'reflection',source:'journal'}}),
     validateEntry({id:'example-plan', kind:'plan', title:'Make time to read', body:'A few pages before dinner.', date:localDate(), time:'17:30', done:false, tags:['Reading']})];
 }
 function toggleDemo(enabled) {
@@ -369,13 +369,19 @@ function toggleDemo(enabled) {
 }
 const viewLabels = {notebook:'Notebook', planner:'Planner', timeline:'Timeline', insights:'Insights', memory:'Memory', chat:'Chat'};
 function setView(hash) {
-  const [view, encodedId] = hash.split('/');
+  const [view, encodedId, rawDraftId] = hash.split('/');
   state.chatSource = undefined;
+  state.chatDraft = undefined;
   $('#chat-signin').href = '/signin-with-chatgpt?return_to=%2F%23chat';
   if (view === 'chat' && encodedId) {
     try {
-      state.chatSource = decodeURIComponent(encodedId);
-      $('#chat-signin').href = '/signin-with-chatgpt?return_to=' + encodeURIComponent('/#chat/' + encodedId);
+      if (encodedId === 'draft' && rawDraftId) {
+        const id = decodeURIComponent(rawDraftId);
+        if (/^[0-9a-f-]{36}$/i.test(id)) state.chatDraft = id;
+      } else {
+        state.chatSource = decodeURIComponent(encodedId);
+      }
+      $('#chat-signin').href = '/signin-with-chatgpt?return_to=' + encodeURIComponent('/#chat/' + encodedId + (state.chatDraft ? '/' + state.chatDraft : ''));
     } catch { /* Ignore incomplete source links. */ }
   }
   const requested = view === 'patterns' ? 'insights' : view;
@@ -513,8 +519,9 @@ const workspace = createWorkspace({
   resetNotice:() => { $('#toast').hidden = true; }
 });
 const memoryChat = createMemoryChat({
-  $, icon, entries: activeEntries, openRecord: workspace.openRecord,
-  access: () => ({ready: canUseNotebook() || state.mode === 'demo', status: accountStatus, demo: state.mode === 'demo'})
+  $, icon, entries: activeEntries, openRecord: workspace.openRecord, openMemoryDraft: workspace.openMemoryDraft,
+  access: () => ({ready:canUseNotebook() || state.mode === 'demo', status:accountStatus, demo:state.mode === 'demo',
+    owner:account?.id, active:state.view === 'chat', draftId:state.chatDraft})
 });
 const memoryExplorer = createMemoryExplorer({
   $, entries:activeEntries, openRecord:workspace.openRecord,
@@ -525,7 +532,7 @@ function renderAll() {
     case 'planner': workspace.renderPlanner(); break;
     case 'timeline': workspace.renderTimeline(); break;
     case 'insights': workspace.renderInsights(); break;
-    case 'chat': memoryChat.render(state.chatSource); break;
+    case 'chat': memoryChat.render(state.chatSource,state.chatDraft); break;
     case 'memory': memoryExplorer.render(); break;
     default: renderNotes(); renderWeek(); workspace.renderToday();
   }

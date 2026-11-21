@@ -1,4 +1,4 @@
-import {addDays, entryTitle, localDate, MOODS} from './model.js';
+import {addDays, entryTitle, localDate, MEMORY_CATEGORIES, MOODS, sortedEntries} from './model.js';
 
 const stopWords = new Set(('a an and any are about did do does find for from have how i in is it me my of on or please s show so tell that the this to up was were what when where which with would you notebook entry entries journal note notes record records remember memory something' +
   ' can could has had some there get give see saved save write written wrote last').split(' '));
@@ -55,6 +55,7 @@ export function recallSource(entry, terms) {
   return {
     id: entry.id, kind: recallKind(entry), date: entry.date, title: entryTitle(entry),
     excerpt: recallExcerpt(entry.body, terms),
+    ...(entry.memory ? {memory:entry.memory} : {}),
     ...(entry.mood ? {mood: MOODS[entry.mood - 1]?.label} : {}),
     ...(entry.kind === 'plan' ? {time: entry.time, completed: entry.done} : {})
   };
@@ -67,11 +68,37 @@ export function collectRecall(entries, criteria, limit = 5) {
       (!from || entry.date >= from) && (!to || entry.date <= to))
     .map(entry => {
       const mood = entry.mood ? MOODS[entry.mood - 1]?.label ?? '' : '';
-      const labels = [entry.title, ...entry.tags, mood].join(' ').toLowerCase();
+      const labels = [entry.title, ...entry.tags, mood, MEMORY_CATEGORIES[entry.memory?.category]].join(' ').toLowerCase();
       const body = entry.body.toLowerCase();
       const score = terms.reduce((total, term) => total + (labels.includes(term) ? 3 : body.includes(term) ? 1 : 0), 0);
       return {entry, score};
     }).filter(match => match.score || !terms.length)
     .sort((a, b) => b.score - a.score || b.entry.date.localeCompare(a.entry.date) || b.entry.createdAt.localeCompare(a.entry.createdAt))
     .slice(0, limit).map(({entry}) => recallSource(entry, terms));
+}
+
+const categoryPrompts = [
+  ['goal', /^(?:what (?:are|were) my (?:goals?|priorities)|(?:show|list) (?:me )?my goals?)\??$/i],
+  ['preference', /^(?:what (?:do i like|are my preferences)|(?:show|list) (?:me )?my preferences)\??$/i],
+  ['person', /^(?:who have i saved|(?:show|list) (?:me )?(?:people|the people) in my (?:engram|memory))\??$/i]
+];
+export function readEngramIntent(message) {
+  const text = message.trim();
+  const remembered = /^(?:please\s+)?remember\s+that\b[,:]?\s*([\s\S]*)$/i.exec(text) ??
+    /^(?:please\s+)?remember this\s*:\s*([\s\S]*)$/i.exec(text);
+  if (remembered) return {mode:'draft',body:remembered[1].trim()};
+  if (/^(?:what (?:do you (?:know|remember) about me)|show (?:me )?my (?:profile|saved memories))\??$/i.test(text)) return {mode:'profile'};
+  const category = categoryPrompts.find(([,pattern])=>pattern.test(text));
+  if (category) return {mode:'profile',category:category[0]};
+  if (/^(?:(?:can you )?help me )?(?:reflect|look back)(?: on (.+?))?[?.]?$/i.test(text)) {
+    return {mode:'reflection',topic:/\bon (.+?)[?.]?$/i.exec(text)?.[1] ?? 'today'};
+  }
+  return {mode:'recall'};
+}
+export function profileRecall(entries, category, limit = 6) {
+  const matches = sortedEntries(entries.filter(entry=>entry.memory && (!category || entry.memory.category === category)));
+  const firstByCategory = new Map();
+  for (const entry of matches) if (!firstByCategory.has(entry.memory.category)) firstByCategory.set(entry.memory.category,entry);
+  const preferred = new Set(firstByCategory.values());
+  return [...preferred,...matches.filter(entry=>!preferred.has(entry))].slice(0,limit).map(entry=>recallSource(entry,[]));
 }

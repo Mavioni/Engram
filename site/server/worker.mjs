@@ -1,4 +1,5 @@
 import {handleMemoryMcp} from './memory-mcp.mjs';
+import {readMemoryDraft} from './memory-drafts.mjs';
 
 const PAGE_SIZE = 64;
 const MAX_MOMENTS = 5000;
@@ -120,6 +121,11 @@ async function writeChange(db, owner, change) {
       SELECT ?, json_extract(value, '$.id'), value FROM json_each(?) WHERE ${writerGuard}
       ON CONFLICT(owner_id, moment_id) DO UPDATE SET entry_json = excluded.entry_json`).bind(owner, records, owner, token));
   }
+  const savedDrafts = change.put.map(entry=>entry.id);
+  for (const ids of chunkedJson(savedDrafts)) {
+    statements.push(db.prepare(`DELETE FROM notebook_memory_drafts WHERE owner_id = ? AND ${writerGuard}
+      AND id IN (SELECT value FROM json_each(?))`).bind(owner,owner,token,ids));
+  }
   statements.push(db.prepare('SELECT revision FROM notebook_revisions WHERE owner_id = ?').bind(owner));
   const results = await db.batch(statements);
   const revision = results.at(-1).results[0].revision;
@@ -132,6 +138,19 @@ export function createNotebookWorker(assets, validateEntry) {
   return {async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === '/mcp') return handleMemoryMcp(request, env, accountFor(request), url.origin, apiJson, readBody);
+    const draftPath = /^\/api\/memory-drafts\/([^/]+)$/.exec(url.pathname);
+    if (draftPath) {
+      if (request.method !== 'GET') return failure(405,'method','Unsupported draft action.');
+      const account = accountFor(request);
+      if (!account) return failure(401,'signed_out','Sign in to review this draft.');
+      if (request.headers.get('X-Engram-Account') !== account.id) return failure(409,'account_changed','Your signed-in account changed.');
+      try {
+        const draft = await readMemoryDraft(env.DB,account.id,draftPath[1]);
+        return draft ? apiJson({draft}) : failure(404,'unavailable','This draft has expired or is unavailable in this account.');
+      } catch {
+        return failure(503,'unavailable','Engram could not open this draft right now.');
+      }
+    }
     if (url.pathname !== '/api/notebook') {
       const name = url.pathname === '/' ? '/index.html' : url.pathname;
       const asset = Object.hasOwn(assets, name) && assets[name];

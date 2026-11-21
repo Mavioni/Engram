@@ -1,4 +1,4 @@
-import {addDays, calendarDays, dateObject, entryTitle, filterEntries, localDate, MOODS, notebookInsights, validateEntry} from './model.js';
+import {addDays, calendarDays, dateObject, entryTitle, filterEntries, localDate, MEMORY_CATEGORIES, MOODS, notebookInsights, validateEntry} from './model.js';
 
 export function createWorkspace({$, esc, icon, entries, access, commit, ensureCurrent, changed, openMoment, resetNotice}) {
   const labels = {month: 'Month', week: 'Week', agenda: 'Agenda'};
@@ -111,24 +111,46 @@ export function createWorkspace({$, esc, icon, entries, access, commit, ensureCu
         <section class="card insight-panel"><h2>Weekly recap</h2><p>Your latest entries from the last 7 days</p>${data.recent.length ? '<ul class="recap-list">' + data.recent.slice(0,5).map(entry => `<li><button type="button" data-record="${esc(entry.id)}"><span>${esc(entryTitle(entry))}</span><small>${esc(dateLabel(entry.date, {month:'short', day:'numeric'}))}</small></button></li>`).join('') + '</ul>' : empty('There are no saved entries from this week yet.')}</section>
       </div>`;
   }
-  function openEditor(kind, record = null, date = localDate()) {
+  const memoryCategory = form.elements.namedItem('memoryCategory');
+  memoryCategory.replaceChildren(new Option('Regular journal entry', ''),
+    ...Object.entries(MEMORY_CATEGORIES).map(([value,label])=>new Option(label,value)));
+  function openEditor(kind, record = null, date = localDate(), draft = null) {
     if (!access().ready || dialog.open) return;
     resetNotice();
-    currentEditor = {record, kind, id: record?.id ?? crypto.randomUUID()};
-    $('#record-kind').textContent = kinds[kind];
-    $('#record-title').textContent = (record ? 'Edit ' : 'New ') + kinds[kind].toLowerCase() + (kind === 'journal' ? ' entry' : '');
+    currentEditor = {record, kind, draft, id: record?.id ?? draft?.id ?? crypto.randomUUID()};
+    const initial = record ?? draft;
+    const isMemory = Boolean(initial?.memory);
+    $('#record-kind').textContent = isMemory ? 'Engram memory' : kinds[kind];
+    $('#record-title').textContent = isMemory ? (record ? 'Edit memory' : 'Review memory') :
+      (record ? 'Edit ' : 'New ') + kinds[kind].toLowerCase() + (kind === 'journal' ? ' entry' : '');
     $('#record-time').hidden = kind !== 'plan';
     $('#remove-record').hidden = !record;
     $('#record-error').textContent = '';
+    $('#record-memory-label').hidden = kind !== 'journal';
+    memoryCategory.disabled = kind !== 'journal';
+    memoryCategory.value = initial?.memory?.category ?? '';
+    syncMemoryLabel();
+    const source = $('#record-memory-origin');
+    source.hidden = !isMemory;
+    source.textContent = initial?.memory?.source === 'chatgpt' ? 'Prepared in ChatGPT' :
+      initial?.memory?.source === 'engram-chat' ? 'From this Engram conversation' : '';
+    if (!source.textContent) source.hidden = true;
     const {title, body, tags, time, date: day} = form.elements;
     title.required = kind === 'plan';
-    title.value = record?.title ?? '';
-    body.value = record?.body ?? '';
-    tags.value = record?.tags.join(', ') ?? '';
-    day.value = record?.date ?? date;
-    time.value = record?.time ?? '';
+    title.value = initial?.title ?? '';
+    body.value = initial?.body ?? '';
+    tags.value = initial?.tags?.join(', ') ?? '';
+    day.value = initial?.date ?? date;
+    time.value = initial?.time ?? '';
     dialog.showModal();
-    title.focus();
+    (draft && !initial.title ? body : title).focus();
+  }
+  function syncMemoryLabel() {
+    $('#record-save-label').textContent = memoryCategory.value ? 'Save memory' : 'Save';
+  }
+  memoryCategory.addEventListener('change',syncMemoryLabel);
+  function openMemoryDraft(draft) {
+    openEditor('journal',null,localDate(),draft);
   }
   function openRecord(id) {
     const entry = entries().find(item => item.id === id);
@@ -139,20 +161,23 @@ export function createWorkspace({$, esc, icon, entries, access, commit, ensureCu
   form.addEventListener('submit', async event => {
     event.preventDefault();
     const editor = currentEditor;
-    const {record, kind, id} = editor;
+    const {record, kind, draft, id} = editor;
     const values = new FormData(form);
-    const controls = [...form.querySelectorAll('button,input,textarea')];
+    const controls = [...form.querySelectorAll('button,input,textarea,select')].filter(item=>!item.disabled);
     controls.forEach(item => { item.disabled = true; });
     const stamp = new Date().toISOString();
     try {
+      const category = values.get('memoryCategory');
+      const memory = category ? {category, source:record?.memory?.source ?? draft?.memory?.source ?? 'journal'} : undefined;
+      if (!record && draft?.id && entries().some(entry=>entry.id === id)) throw new Error('This draft has already been saved. Open the memory from your notebook.');
       const item = validateEntry({id, kind, title: values.get('title'), body: values.get('body'), date: values.get('date'),
         tags: values.get('tags').split(','), time: values.get('time'), done: record?.done ?? false,
-        createdAt: record?.createdAt ?? stamp, updatedAt: stamp});
+        createdAt: record?.createdAt ?? stamp, updatedAt: stamp, memory});
       if (record) ensureCurrent(record);
       await commit(record ? entries().map(entry => entry.id === id ? item : entry) : [...entries(), item]);
       if (kind === 'plan') calendar.date = item.date;
       if (currentEditor === editor && dialog.open) dialog.close();
-      changed(kind === 'plan' ? 'Plan saved.' : 'Journal entry saved.');
+      changed(item.memory ? 'Memory saved.' : kind === 'plan' ? 'Plan saved.' : 'Journal entry saved.');
       document.querySelector('[data-record="' + CSS.escape(id) + '"]')?.focus();
     } catch (error) {
       if (currentEditor === editor) $('#record-error').textContent = error.message;
@@ -166,7 +191,7 @@ export function createWorkspace({$, esc, icon, entries, access, commit, ensureCu
     try {
       ensureCurrent(record);
       await commit(entries().filter(entry => entry.id !== record.id));
-      dialog.close(); changed(record.kind === 'plan' ? 'Plan deleted.' : 'Journal entry deleted.');
+      dialog.close(); changed(record.memory ? 'Memory deleted.' : record.kind === 'plan' ? 'Plan deleted.' : 'Journal entry deleted.');
     } catch (error) { $('#record-error').textContent = error.message; }
     finally { control.disabled = false; }
   });
@@ -210,7 +235,7 @@ export function createWorkspace({$, esc, icon, entries, access, commit, ensureCu
     } catch (error) { input.checked = plan.done; changed(error.message); }
     finally { input.disabled = false; }
   });
-  return {renderPlanner, renderToday, renderTimeline, renderInsights, openEditor, openRecord, reset: () => {
+  return {renderPlanner, renderToday, renderTimeline, renderInsights, openEditor, openRecord, openMemoryDraft, reset: () => {
     timeline.query = ''; timeline.filter = 'all'; timeline.limit = 30;
     calendar.date = localDate(); calendar.mode = 'month'; range = 30;
     $('#timeline-content').replaceChildren();
