@@ -25,9 +25,10 @@ for (const [file, type] of Object.entries(mimeTypes)) {
 const model = assets['/model.js'][1].replace(/^export /gm, '');
 const unmodule = source => source.replace(/^(?:export |import [^\n]+\n)/gm, '');
 const recall = unmodule(assets['/recall.js'][1]);
+const drafts = unmodule(await read('server/memory-drafts.mjs'));
 const mcp = unmodule(await read('server/memory-mcp.mjs'));
 const server = unmodule(await read('server/worker.mjs'));
-const entry = [model, recall, mcp, server, 'export default createNotebookWorker(' + JSON.stringify(assets) + ', validateEntry);'].join('\n');
+const entry = [model, recall, drafts, mcp, server, 'export default createNotebookWorker(' + JSON.stringify(assets) + ', validateEntry);'].join('\n');
 await mkdir(path.join(root, 'dist/server'), {recursive: true});
 await writeFile(path.join(root, 'dist/server/index.js'), entry);
 await mkdir(path.join(root, 'dist/.openai'), {recursive: true});

@@ -7,6 +7,22 @@ export const MOODS = [
   { value: 4, label: 'Good', color: '#c1d8a2', ink: '#627a47' },
   { value: 5, label: 'Great', color: '#efb7a1', ink: '#a0634d' }
 ];
+export const MEMORY_CATEGORIES = {
+  moment: 'Moment',
+  fact: 'Personal fact',
+  preference: 'Preference',
+  person: 'Person',
+  goal: 'Goal',
+  reflection: 'Reflection'
+};
+const memorySources = new Set(['journal', 'engram-chat', 'chatgpt']);
+
+export function validateMemoryMetadata(metadata) {
+  if (!metadata || typeof metadata.category !== 'string' || !Object.hasOwn(MEMORY_CATEGORIES, metadata.category) || !memorySources.has(metadata.source)) {
+    throw new Error('Choose a valid memory category and source.');
+  }
+  return {category:metadata.category, source:metadata.source};
+}
 export const FACTORS = ['Work', 'People', 'Rest', 'Movement', 'Creativity', 'Outside'];
 export const localDate = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 export const dateObject = date => new Date(`${date}T12:00:00`);
@@ -40,7 +56,7 @@ export function validateEntry(entry) {
   if (kind === 'moment') return {...record, mood: entry.mood};
   if (kind === 'journal') {
     if (!title && !body) throw new Error('Add a title or some writing.');
-    return {...record, kind};
+    return {...record, kind, ...(entry.memory === undefined ? {} : {memory:validateMemoryMetadata(entry.memory)})};
   }
   if (!title) throw new Error('Give the plan a title.');
   const time = entry.time ?? '';

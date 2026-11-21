@@ -1,4 +1,4 @@
-import {dateObject, MOODS} from './model.js';
+import {dateObject, MEMORY_CATEGORIES, MOODS} from './model.js';
 import {buildMemoryIndex, filterMemory, memoryGraph, memoryKinds, memoryNeighbors, placeMemory, traceMemory} from './memory-index.js';
 
 export function createMemoryExplorer({$, entries, access, openRecord}) {
@@ -45,7 +45,7 @@ export function createMemoryExplorer({$, entries, access, openRecord}) {
   }
   function describe(node) {
     if (node.kind === 'topic') return `${node.links.size} ${node.links.size === 1 ? 'entry' : 'entries'}`;
-    return [memoryKinds[node.kind], dateLabel.format(dateObject(node.entry.date)),
+    return [MEMORY_CATEGORIES[node.entry.memory?.category] ?? memoryKinds[node.kind], dateLabel.format(dateObject(node.entry.date)),
       node.kind === 'moment' ? MOODS[node.entry.mood - 1]?.label : null].filter(Boolean).join(' · ');
   }
   function updateTopics() {
@@ -84,6 +84,8 @@ export function createMemoryExplorer({$, entries, access, openRecord}) {
     }
     const intro = html('div','memory-detail-top');
     intro.append(html('p','memory-detail-label',describe(node)),html('h3','memory-detail-title',node.title));
+    if (node.entry?.memory) intro.append(html('p','memory-excerpt',
+      {'journal':'Saved in journal','engram-chat':'Saved from Engram chat','chatgpt':'Prepared in ChatGPT'}[node.entry.memory.source]));
     if (node.entry?.body) intro.append(html('p','memory-excerpt',node.entry.body.length > 215 ? node.entry.body.slice(0,215) + '…' : node.entry.body));
     const controls = html('div','memory-node-actions');
     if (node.entry) controls.append(action('Open entry','open','button button-sage'));
@@ -153,7 +155,7 @@ export function createMemoryExplorer({$, entries, access, openRecord}) {
       const current = node.key === selected;
       const stroke = current ? ' is-selected' : steps.has(node.key) ? ' on-trace' : '';
       const g = graphic('g',{transform:`translate(${point.x} ${point.y})`,role:'button',tabindex:0,
-        class:'memory-dot node-' + node.kind + stroke,'aria-label':`${memoryKinds[node.kind]}: ${node.title}`,
+        class:'memory-dot node-' + node.kind + stroke,'aria-label':`${MEMORY_CATEGORIES[node.entry?.memory?.category] ?? memoryKinds[node.kind]}: ${node.title}`,
         'aria-pressed':current,'data-memory-node':node.key});
       const title = graphic('title',{}); title.textContent = node.title;
       const target = graphic('circle',{r:20,class:'memory-hit'});

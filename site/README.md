@@ -14,11 +14,15 @@ The Memory tab indexes journal entries, mood check-ins, and plans from the activ
 
 The explorer’s graph, index, inspector, and trace workflow were inspired by [GitNexus](https://github.com/abhigyanpatwari/GitNexus). It uses Engram’s notebook model and renderer.
 
-## Memory chat
+## Engram Chat and saved memories
 
-The Chat screen uses your current Engram session and searches the notebook already loaded in the browser. Replies are based on matching excerpts, and the chat resets when the page or account changes. It can be used in the example notebook without signing in.
+The Chat screen can recall notebook entries, offer guided reflection prompts, and open a memory draft from “Remember that…” or any message you choose to keep. The in-browser chat is session-scoped. Only saving the draft adds it to the notebook. Saved memories use editable journal records with a category and provenance, so they can be inspected, found, edited, exported, or deleted through existing notebook workflows.
 
-The optional private Engram plugin lets a ChatGPT conversation search the signed-in user’s Engram notebook with `search_engram_memory`. The Worker authenticates each tool invocation and returns up to six dated sources with short excerpts. The tool cannot modify the notebook. It does not use OpenAI API keys or access ChatGPT history. The browser-side chat does not call a model.
+“What do you remember about me?” reads only memories the user saved intentionally. The Memory explorer can filter to those entries. Category labels are personal facts, preferences, people, goals, moments, and reflections.
+
+The private Engram app in ChatGPT supports grounded search, a limited view of the saved profile, and preparation of memory drafts. It stores only the draft details in the user’s D1 account. Drafts are accessible for 24 hours through an authenticated review link and removed from the draft table when saved. Expired drafts are pruned on later draft preparation. Signed-out viewers and other accounts cannot retrieve them. Draft preparation does not alter the notebook’s saved memories.
+
+ChatGPT generates answers in the connected ChatGPT conversation. The website’s recall and guided reflection features run in the browser. ChatGPT’s AI capability does not depend on sharing an API key with Engram.
 
 ## Develop
 

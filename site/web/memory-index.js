@@ -1,4 +1,4 @@
-import {entryTitle, MOODS, sortedEntries} from './model.js';
+import {entryTitle, MEMORY_CATEGORIES, MOODS, sortedEntries} from './model.js';
 
 export const memoryKinds = {journal:'Journal', moment:'Check-in', plan:'Plan', topic:'Topic'};
 const topicKey = label => label.normalize('NFKC').toLowerCase();
@@ -23,9 +23,9 @@ export function buildMemoryIndex(entries) {
 export function filterMemory(index, query, kind, topic) {
   const terms = topicKey(query).trim().split(/\s+/).filter(Boolean);
   const records = [...index.items.values()].filter(node => {
-    if ((kind !== 'all' && kind !== node.kind) || (topic && !node.links.has(topic))) return false;
+    if ((kind !== 'all' && (kind === 'memory' ? !node.entry.memory : kind !== node.kind)) || (topic && !node.links.has(topic))) return false;
     const {entry} = node;
-    const metadata = topicKey([node.title, entry.date, ...entry.tags, MOODS[entry.mood - 1]?.label].join(' '));
+    const metadata = topicKey([node.title, entry.date, ...entry.tags, MEMORY_CATEGORIES[entry.memory?.category], MOODS[entry.mood - 1]?.label].join(' '));
     let body;
     return terms.every(term => metadata.includes(term) || (body ??= topicKey(entry.body)).includes(term));
   });
