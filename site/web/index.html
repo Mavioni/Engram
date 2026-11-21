@@ -86,7 +86,66 @@
           <div class="page-intro compact-intro"><h1 id="insights-title">Insights<span>.</span></h1><p>See what you’ve made time to notice.</p></div>
           <div id="insights-content"></div>
         </section>
-        <section id="view-memory" class="view" aria-labelledby="memory-title" hidden><div class="page-intro compact-intro"><p class="eyebrow">THE CONNECTIONS YOU KEEP</p><h1 id="memory-title">A constellation<br>of <em>you.</em></h1><p>Each point is a moment. Shared factors draw them together.</p></div><section class="graph-card"><div class="graph-toolbar"><span><span class="live-dot"></span> <span id="graph-summary">Your memory</span></span><div><button id="toggle-motion" class="graph-control">Pause motion</button><button id="reset-graph" class="icon-button" aria-label="Reset memory view" data-icon="reset"></button></div></div><div class="graph-container"><canvas id="memory-canvas" aria-label="Three-dimensional memory visualization. The list below provides the same moments and their connections."></canvas><div id="graph-empty" class="graph-empty"><span data-icon="network"></span><h2>Every story begins somewhere.</h2><p>Keep a moment in your notebook.<br>Connections appear when moments share a factor.</p><button class="button button-sage" data-action="new">Keep your first moment <span data-icon="arrow"></span></button></div><div id="graph-tooltip" class="graph-tooltip" hidden></div></div><div class="graph-footer"><span><span class="legend-node"></span> A moment</span><span><span class="legend-line"></span> A shared factor</span><span class="graph-hint">Drag to explore · Select a point to read</span></div></section><section class="memory-list-section"><div class="section-heading"><h2>Your connected moments</h2><span class="quiet-label">The same story, in words</span></div><div id="memory-list" class="memory-list"></div><button type="button" id="memory-more" class="button button-dark more-records" hidden>Show more moments</button></section></section>
+        <section id="view-memory" class="view memory-explorer" aria-labelledby="memory-title" hidden>
+          <div class="page-intro compact-intro memory-intro">
+            <h1 id="memory-title">Memory<span>.</span></h1>
+            <p>Explore your journal, check-ins, and plans through the topics you’ve tagged.</p>
+          </div>
+          <section class="card view-gate" id="memory-gate" aria-labelledby="memory-gate-title" hidden>
+            <h2 id="memory-gate-title">Opening your notebook…</h2>
+            <div>
+              <a id="memory-signin" class="button button-dark" href="/signin-with-chatgpt?return_to=%2F%23memory" target="_top" hidden>Sign in with ChatGPT</a>
+              <button id="memory-retry" type="button" class="button button-sage" data-action="retry" hidden>Try again</button>
+              <button id="memory-example" type="button" class="text-button" data-action="demo" hidden>Explore an example</button>
+            </div>
+          </section>
+          <div class="memory-shell" id="memory-shell" hidden>
+            <div class="memory-tools">
+              <label class="search-box memory-search"><span data-icon="search"></span><input type="search" id="memory-query" aria-label="Search memory" placeholder="Search titles, text, tags, or dates"></label>
+              <label><span class="sr-only">Entry type</span><select id="memory-kind"><option value="all">All entries</option><option value="journal">Journal</option><option value="moment">Check-ins</option><option value="plan">Plans</option></select></label>
+              <label><span class="sr-only">Topic</span><select id="memory-topic"><option value="">All topics</option></select></label>
+              <div class="segments memory-modes" role="group" aria-label="Memory view">
+                <button type="button" id="memory-graph-mode" aria-pressed="true">Graph</button>
+                <button type="button" id="memory-list-mode" aria-pressed="false">List</button>
+              </div>
+            </div>
+            <div class="memory-layout">
+              <section class="card memory-index-panel" id="memory-index-panel" aria-labelledby="memory-index-title">
+                <header class="memory-panel-heading">
+                  <div><h2 id="memory-index-title">Index</h2><p id="memory-count" role="status"></p></div>
+                  <button class="icon-button" type="button" id="memory-clear-search" aria-label="Clear search and filters" data-icon="reset" hidden></button>
+                </header>
+                <div class="memory-index-scroll">
+                  <div id="memory-results"></div>
+                  <button type="button" class="text-button" id="memory-more" hidden>Show more entries</button>
+                </div>
+              </section>
+              <section class="memory-network" id="memory-network" aria-labelledby="memory-network-title">
+                <header class="memory-panel-heading">
+                  <div><h2 id="memory-network-title">Knowledge graph</h2><p id="memory-graph-count"></p></div>
+                  <div class="memory-zoom" role="group" aria-label="Graph controls">
+                    <button type="button" id="memory-zoom-out" aria-label="Zoom out">−</button>
+                    <button type="button" id="memory-zoom-in" aria-label="Zoom in">+</button>
+                    <button type="button" id="memory-fit" class="icon-button" aria-label="Fit graph to view" data-icon="reset"></button>
+                  </div>
+                </header>
+                <div class="memory-stage" id="memory-stage">
+                  <svg id="memory-svg" role="group" aria-label="Memory nodes connected by saved tags"><g id="memory-viewport"></g></svg>
+                  <div id="memory-empty" class="memory-empty" hidden><span data-icon="network"></span><p id="memory-empty-text"></p><button type="button" class="button button-sage" id="memory-add" data-action="new">Add an entry</button></div>
+                </div>
+                <div class="memory-legend" aria-label="Node types">
+                  <span class="memory-marker node-topic">Topic</span><span class="memory-marker node-journal">Journal</span>
+                  <span class="memory-marker node-moment">Check-in</span><span class="memory-marker node-plan">Plan</span>
+                </div>
+              </section>
+              <section class="card memory-inspector" aria-labelledby="memory-inspector-title">
+                <header class="memory-panel-heading"><h2 id="memory-inspector-title">Inspector</h2></header>
+                <div id="memory-details"></div>
+                <p id="memory-announcement" class="sr-only" role="status"></p>
+              </section>
+            </div>
+          </div>
+        </section>
         <section id="view-chat" class="view memory-chat" aria-labelledby="chat-title" hidden>
           <div class="page-intro compact-intro chat-intro">
             <h1 id="chat-title">Memory chat<span>.</span></h1>

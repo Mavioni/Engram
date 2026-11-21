@@ -9,7 +9,7 @@ const css = await readFile(path.join(root, 'web', 'styles.css'), 'utf8');
 const model = (await readFile(path.join(root, 'web', 'model.js'), 'utf8')).replace(/^export /gm, '');
 const account = (await readFile(path.join(root, 'web', 'account.js'), 'utf8')).replace(/^export /gm, '');
 const workspace = (await readFile(path.join(root, 'web', 'workspace.js'), 'utf8')).replace(/^import[^\n]+\n/gm, '').replace(/^export /gm, '');
-const extra = await Promise.all(['recall.js', 'memory-chat.js'].map(async name =>
+const extra = await Promise.all(['recall.js', 'memory-chat.js', 'memory-index.js', 'memory-explorer.js'].map(async name =>
   (await readFile(path.join(root, 'web', name), 'utf8')).replace(/^import[^\n]+\n/gm, '').replace(/^export /gm, '')));
 const app = (await readFile(path.join(root, 'web', 'app.js'), 'utf8')).replace(/^import[^\n]+\n/gm, '');
 const favicon = await readFile(path.join(root, 'web', 'favicon.svg'), 'utf8');

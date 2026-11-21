@@ -12,6 +12,8 @@ const mimeTypes = {
   'workspace.js': 'text/javascript',
   'recall.js': 'text/javascript',
   'memory-chat.js': 'text/javascript',
+  'memory-index.js': 'text/javascript',
+  'memory-explorer.js': 'text/javascript',
   'styles.css': 'text/css',
   'favicon.svg': 'image/svg+xml'
 };
